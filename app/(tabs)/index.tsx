@@ -1,98 +1,189 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const BAIRROS_TESTE = ['Meireles', 'Aldeota', 'Dionisio Torres'];
 
-export default function HomeScreen() {
+const HomeScreen = () => {
+  const [bairroSelecionado, setBairroSelecionado] = useState('');
+  const [valorImovel, setValorImovel] = useState('');
+  const [metrosQuadrados, setMetrosQuadrados] = useState('');
+  const [isBairroCollapsed, setIsBairroCollapsed] = useState(true);
+
+
+  const handlePesquisar = () => {
+    console.log('Pesquisar Imóvel com os dados:');
+    console.log('Bairro:', bairroSelecionado);
+    console.log('Valor:', valorImovel);
+    console.log('Metros Quadrados:', metrosQuadrados);
+  };
+
+  const selectBairro = (bairro) => {
+    setBairroSelecionado(bairro);
+    setIsBairroCollapsed(true);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Avaliação Imobiliária Inteligente</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Bairro:</Text>
+          <TouchableOpacity 
+            style={styles.accordionHeader} 
+            onPress={() => setIsBairroCollapsed(!isBairroCollapsed)}
+          >
+            <Text style={styles.accordionHeaderText}>
+              {bairroSelecionado || 'Selecione um Bairro'}
+            </Text>
+            <Text>{isBairroCollapsed ? '▼' : '▲'}</Text>
+          </TouchableOpacity>
+          
+          {!isBairroCollapsed && (
+            <View style={styles.accordionContent}>
+              {BAIRROS_TESTE.map((bairro, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.bairroOption}
+                  onPress={() => selectBairro(bairro)}
+                >
+                  <Text style={styles.bairroText}>{bairro}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Valor do Imóvel (R$):</Text>
+          <TextInput
+            style={styles.textInput}
+            onChangeText={setValorImovel}
+            value={valorImovel}
+            keyboardType="numeric"
+            placeholder="Ex: 500000"
+          />
+        </View>
+
+        {/* --- 3. Input para Metros Quadrados --- */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Metros Quadrados (m²):</Text>
+          <TextInput
+            style={styles.textInput}
+            onChangeText={setMetrosQuadrados}
+            value={metrosQuadrados}
+            keyboardType="numeric"
+            placeholder="Ex: 85"
+          />
+        </View>
+
+        {/* --- 4. Botão Pesquisar --- */}
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handlePesquisar}
+          // Desabilita o botão se algum campo estiver vazio
+          disabled={!bairroSelecionado || !valorImovel || !metrosQuadrados} 
+        >
+          <Text style={styles.buttonText}>Pesquisar 🔎</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
-}
+};
+
+// --- Estilização (Styles) ---
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    color: '#333',
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#555',
+    fontWeight: '600',
+  },
+  textInput: {
+    height: 45,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    fontSize: 16,
+  },
+  // --- Estilos da "Sanfona" ---
+  accordionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    height: 45,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#fff',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  accordionHeaderText: {
+    fontSize: 16,
+    color: '#333',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  accordionContent: {
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderRadius: 8,
+    marginTop: -8, // Sobrepõe um pouco a borda
+    paddingTop: 10,
+    backgroundColor: '#fff',
+  },
+  bairroOption: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  bairroText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  // --- Estilos do Botão ---
+  button: {
+    marginTop: 30,
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
+
+export default HomeScreen;
