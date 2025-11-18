@@ -1,377 +1,549 @@
-import React, { useState } from 'react';
+import { Stack, useRouter } from 'expo-router';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     SafeAreaView,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity,
     View,
-    ScrollView,
-    Keyboard,
+    TouchableOpacity,
+    Modal,
+    Dimensions,
+    Alert, 
+    KeyboardAvoidingView,
     Platform,
+    Image
 } from 'react-native';
 
-import { useRouter, Stack } from 'expo-router';
-// Importação de ícones (@expo/vector-icons é robusto e evita problemas de compatibilidade)
-import { FontAwesome } from '@expo/vector-icons';
-import { MapPin, DollarSign, Home } from 'lucide-react-native';
+// Ícones
+import { DollarSign, Home, MapPin, TrendingUp, ChevronDown, Check, Search, X } from 'lucide-react-native';
 
 // Importa os dados dos bairros
 import BAIRROS_DATA from '../../data/bairros.json';
 
-// Definição de Cores Baseadas nas imagens
+const { width } = Dimensions.get('window');
+
+// --- DEFINIÇÃO DE CORES ---
 const COLORS = {
-    primary: '#6C5CE7', // Roxo principal
-    background: '#F8F8F8',
+    primary: '#1D4ED8', // Azul forte (moderno)
+    primaryLight: '#DCE7FF', // Azul claro para fundo
+    background: '#F8F8F8', // Fundo cinza claro
     card: '#FFFFFF',
     text: '#333333',
     label: '#6B7280',
-    inputBorder: '#D1D5DB',
-    placeholder: '#A1A1AA',
-    shadow: 'rgba(0,0,0,0.08)',
-    infoText: '#6C5CE7',
+    title: '#1F2937',
+    danger: '#EF4444',
+    success: '#10B981',
+    inputBorder: '#E5E7EB',
 };
 
-// Garantindo que BAIRROS_DATA é um array de strings válidas
-const BAIRROS_NOMES: string[] = BAIRROS_DATA
-    .filter(item => item.bairro && typeof item.bairro === "string")
-    .map(item => item.bairro.trim());
+// --- TIPAGEM ---
+interface BairroData {
+    bairro: string;
+}
 
-const HomeScreen = () => {
-    const router = useRouter(); 
+// --- FUNÇÕES DE UTILIDADE ---
+const formatCurrencyInput = (value: string) => {
+    // Remove tudo que não for dígito
+    let cleanValue = value.replace(/[^\d]/g, '');
+
+    if (!cleanValue) return '';
+
+    // Converte para número e depois para formato de moeda
+    let num = parseInt(cleanValue, 10) / 100;
     
-    const [bairroSelecionado, setBairroSelecionado] = useState('');
-    const [valorImovel, setValorImovel] = useState('');
-    const [metrosQuadrados, setMetrosQuadrados] = useState('');
-    const [isBairroCollapsed, setIsBairroCollapsed] = useState(true);
+    return num.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+};
+
+const extractNumericValue = (formattedValue: string): number => {
+    if (!formattedValue) return 0;
+    
+    // Remove R$, pontos de milhar e substitui a vírgula decimal por ponto
+    const cleanValue = formattedValue
+        .replace(/[R$\s.]/g, '')
+        .replace(',', '.');
+        
+    return parseFloat(cleanValue) || 0;
+};
+
+
+/* -------------------------------------------------------------------------- */
+/* COMPONENTES DO FORMULÁRIO                                                  */
+/* -------------------------------------------------------------------------- */
+
+interface InputFieldProps {
+    label: string;
+    icon: React.ComponentType<{ size: number; color: string }>;
+    value: string;
+    onChangeText: (text: string) => void;
+    keyboardType?: 'default' | 'numeric';
+    placeholder?: string;
+}
+
+const InputField: React.FC<InputFieldProps> = ({ label, icon: Icon, value, onChangeText, keyboardType = 'default', placeholder }) => (
+    <View style={styles.inputGroup}>
+        <View style={styles.inputLabelContainer}>
+            <Icon size={16} color={COLORS.label} />
+            <Text style={styles.inputLabel}>{label}</Text>
+        </View>
+        <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            keyboardType={keyboardType}
+            placeholder={placeholder}
+            placeholderTextColor="#C7C7C7"
+        />
+    </View>
+);
+
+interface BairroSelectorProps {
+    bairros: BairroData[];
+    selectedBairro: string;
+    onSelectBairro: (bairro: string) => void;
+}
+
+// COMPONENTE DO SELETOR DE BAIRRO COM FILTRO E ROLAGEM
+const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro, onSelectBairro }) => {
+    const [modalVisible, setModalVisible] = useState(false);
+    // Novo estado para o termo de pesquisa
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- Formatação de Moeda ---
-    const handleValorChange = (text: string) => {
-        const cleaned = text.replace(/\D/g, ''); 
-        if (cleaned) {
-            let num = parseInt(cleaned, 10);
-            if (isNaN(num)) num = 0;
-
-            const floatValue = num / 100; 
-            const formatted = floatValue.toLocaleString('pt-BR', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            });
-            setValorImovel(formatted);
-        } else {
-            setValorImovel('');
+    // Filtra a lista de bairros com base no termo de pesquisa
+    const filteredBairros = useMemo(() => {
+        if (!searchTerm) {
+            return bairros;
         }
+        const lowerCaseSearch = searchTerm.toLowerCase();
+        return bairros.filter(item => 
+            item.bairro.toLowerCase().includes(lowerCaseSearch)
+        );
+    }, [searchTerm, bairros]);
+
+    const handleSelect = (bairro: string) => {
+        onSelectBairro(bairro);
+        setModalVisible(false);
+        setSearchTerm(''); // Limpa o termo de busca ao selecionar
     };
 
-    const handlePesquisar = () => {
-        if (!bairroSelecionado || !valorImovel || !metrosQuadrados) {
-            // Em uma aplicação real, você mostraria um feedback visual aqui (ex: Toast, Alert)
-            return;
+    const handleOpenModal = () => {
+        setModalVisible(true);
+        setSearchTerm(''); // Inicia a busca vazia
+    };
+
+    return (
+        <View style={styles.inputGroup}>
+            <View style={styles.inputLabelContainer}>
+                <MapPin size={16} color={COLORS.label} />
+                <Text style={styles.inputLabel}>Bairro do Imóvel</Text>
+            </View>
+            
+            {/* BOTÃO QUE ABRE O MODAL - Exibe o bairro selecionado */}
+            <TouchableOpacity 
+                style={styles.selectButton} 
+                onPress={handleOpenModal}
+                activeOpacity={0.8}
+            >
+                <Text style={[styles.selectButtonText, selectedBairro ? { color: COLORS.text } : { color: '#C7C7C7' }]}>
+                    {selectedBairro || 'Selecione ou Busque o Bairro'}
+                </Text>
+                <ChevronDown size={20} color={COLORS.primary} />
+            </TouchableOpacity>
+
+            {/* MODAL COM PESQUISA E LISTA ROLÁVEL */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                {/* KeyboardAvoidingView para ajustar o modal quando o teclado aparece */}
+                <KeyboardAvoidingView
+                    style={styles.modalOverlay}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                >
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Selecione o Bairro</Text>
+                            <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                <X size={24} color={COLORS.label} />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        {/* CAMPO DE PESQUISA DENTRO DO MODAL */}
+                        <View style={styles.searchContainer}>
+                            <Search size={20} color={COLORS.label} style={styles.searchIcon} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Digite o nome do bairro para filtrar..."
+                                placeholderTextColor="#9CA3AF"
+                                value={searchTerm}
+                                onChangeText={setSearchTerm}
+                            />
+                        </View>
+                        
+                        {/* LISTA ROLÁVEL COM BAIRROS FILTRADOS */}
+                        <ScrollView style={styles.bairroListContainer}>
+                            {filteredBairros.length > 0 ? (
+                                filteredBairros.map((item) => (
+                                    <TouchableOpacity
+                                        key={item.bairro}
+                                        style={styles.bairroListItem}
+                                        onPress={() => handleSelect(item.bairro)}
+                                    >
+                                        <Text style={styles.bairroListItemText}>{item.bairro}</Text>
+                                        {selectedBairro === item.bairro && (
+                                            <Check size={18} color={COLORS.success} />
+                                        )}
+                                    </TouchableOpacity>
+                                ))
+                            ) : (
+                                <Text style={styles.noResultsText}>Nenhum bairro encontrado para "{searchTerm}".</Text>
+                            )}
+                        </ScrollView>
+
+                        {/* Botão de Fechar para telas menores */}
+                        <TouchableOpacity style={styles.modalCloseButton} onPress={() => setModalVisible(false)}>
+                            <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+        </View>
+    );
+};
+
+
+/* -------------------------------------------------------------------------- */
+/* TELA PRINCIPAL (INDEX)                                                     */
+/* -------------------------------------------------------------------------- */
+
+const HomeScreen = () => {
+    const router = useRouter();
+    
+    // CAMPOS VAZIOS POR PADRÃO (Conforme solicitação)
+    const [valorInput, setValorInput] = useState('');
+    const [metrosQuadrados, setMetrosQuadrados] = useState('');
+    const [bairro, setBairro] = useState('');
+    
+    // Lista de Bairros
+    const bairrosList = useMemo(() => {
+        // Ordena a lista de bairros
+        return (BAIRROS_DATA as BairroData[])
+            .map(item => ({ bairro: item.bairro }))
+            .sort((a, b) => a.bairro.localeCompare(b.bairro));
+    }, []);
+
+    // Tratamento de mudança de valor (moeda)
+    const handleValorChange = (text: string) => {
+        setValorInput(formatCurrencyInput(text));
+    };
+    
+    // Validação e Navegação
+    const handleAnalisar = () => {
+        // Extrai o valor numérico do input formatado
+        const valorNumerico = extractNumericValue(valorInput);
+        const m2Numerico = parseInt(metrosQuadrados, 10);
+
+        if (valorNumerico <= 0 || isNaN(m2Numerico) || m2Numerico <= 0 || !bairro) {
+             Alert.alert("Erro de Validação", "Por favor, preencha todos os campos corretamente (Valor e Metragem devem ser maiores que zero e o Bairro deve ser selecionado).");
+             return;
         }
 
-        const valorParaEnvio = parseFloat(valorImovel.replace(/\./g, '').replace(',', '.'));
-
-        const dadosPesquisa = {
-            bairro: bairroSelecionado,
-            valor: valorParaEnvio.toFixed(2),
-            metrosQuadrados: metrosQuadrados,
-        };
-
         router.push({
-            pathname: '/resultado',
-            params: dadosPesquisa
+            pathname: "/resultado",
+            params: { 
+                bairro: bairro, 
+                valor: valorNumerico.toString(), 
+                metrosQuadrados: metrosQuadrados 
+            }
         });
     };
 
-    const selectBairro = (bairro: string) => {
-        setBairroSelecionado(bairro);
-        setSearchTerm(bairro);
-        setIsBairroCollapsed(true);
-        Keyboard.dismiss();
-    };
+    // Função para checar se o botão deve estar ativo
+    const isButtonEnabled = useMemo(() => {
+        const valorNumerico = extractNumericValue(valorInput);
+        const m2Numerico = parseInt(metrosQuadrados, 10);
 
-    const filteredBairros = BAIRROS_NOMES.filter(bairro =>
-        bairro.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        return valorNumerico > 0 && !isNaN(m2Numerico) && m2Numerico > 0 && !!bairro;
+    }, [valorInput, metrosQuadrados, bairro]);
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <Stack.Screen options={{ headerShown: false }} />
-            <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-                <View style={styles.container}>
-                    
-                    <Text style={styles.title}>Análise de Investimento Imobiliário</Text>
-                    <Text style={styles.subtitle}>Preencha os dados do imóvel que você deseja comprar em Fortaleza.</Text>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                
+                {/* --- HEADER CENTRALIZADO (ESTILIZADO) --- */}
+                <View style={styles.headerContainer}>
+                    {/* Componente Image */}
+                    <Image 
+                        // URL de placeholder (Atualizada para 300x80)
+                        source={{ 
+                            uri: 'https://i.imgur.com/oNizFxc.png' 
+                        }}
+                        style={styles.headerLogo}
+                    />
+                    <Text style={styles.headerSubtitle}>
+                        Preencha os dados do imóvel que você deseja comprar em Fortaleza.
 
-                    {/* --- 1. Valor do Imóvel --- */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Valor do Imóvel</Text>
-                        <View style={styles.inputWithIcon}>
-                            <DollarSign size={20} color={COLORS.label} />
-                            <Text style={styles.currencyPrefix}>R$</Text>
-                            <TextInput
-                                style={styles.textInput}
-                                onChangeText={handleValorChange}
-                                value={valorImovel}
-                                keyboardType="numeric"
-                                placeholder="0,00"
-                                placeholderTextColor={COLORS.placeholder}
-                            />
-                        </View>
-                    </View>
 
-                    {/* --- 2. Metros Quadrados --- */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Metragem Quadrada (m²)</Text>
-                        <View style={styles.inputWithIcon}>
-                            <Home size={20} color={COLORS.label} />
-                            <TextInput
-                                style={styles.textInput}
-                                onChangeText={setMetrosQuadrados}
-                                value={metrosQuadrados}
-                                keyboardType="numeric"
-                                placeholder="Ex: 120"
-                                placeholderTextColor={COLORS.placeholder}
-                            />
-                        </View>
-                    </View>
-
-                    {/* --- 3. Bairro --- */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Bairro do Imóvel</Text>
-                        <TouchableOpacity 
-                            style={styles.accordionHeader} 
-                            onPress={() => setIsBairroCollapsed(!isBairroCollapsed)}
-                            activeOpacity={0.8}
-                        >
-                            <View style={styles.inputWithIconInner}>
-                                <MapPin size={20} color={COLORS.label} />
-                                <TextInput
-                                    style={styles.accordionTextInput}
-                                    onChangeText={(text) => {
-                                        setSearchTerm(text);
-                                        setBairroSelecionado('');
-                                        setIsBairroCollapsed(false);
-                                    }}
-                                    value={searchTerm}
-                                    placeholder="Buscar ou Selecionar Bairro"
-                                    placeholderTextColor={COLORS.placeholder}
-                                    onFocus={() => setIsBairroCollapsed(false)}
-                                    // Previne que o TouchableOpacity capture o foco do TextInput
-                                    editable={!isBairroCollapsed} 
-                                />
-                            </View>
-                            <FontAwesome 
-                                name={isBairroCollapsed ? 'chevron-down' : 'chevron-up'} 
-                                size={16} 
-                                color={COLORS.label} 
-                            />
-                        </TouchableOpacity>
-
-                        {!isBairroCollapsed && (
-                            <View style={styles.accordionContent}>
-                                <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 200 }}>
-                                    {filteredBairros.length > 0 ? (
-                                        filteredBairros.map((bairroItem, index) => (
-                                            <TouchableOpacity
-                                                key={index}
-                                                style={styles.bairroOption}
-                                                onPress={() => selectBairro(bairroItem)}
-                                            >
-                                                <Text style={styles.bairroText}>{bairroItem}</Text>
-                                            </TouchableOpacity>
-                                        ))
-                                    ) : (
-                                        <Text style={styles.noResultsText}>Nenhum bairro encontrado.</Text>
-                                    )}
-                                </ScrollView>
-                            </View>
-                        )}
-                        {bairroSelecionado && isBairroCollapsed && (
-                            <View style={styles.infoBox}>
-                                <FontAwesome name="info-circle" size={14} color={COLORS.infoText} />
-                                <Text style={styles.infoText}>Bairro selecionado: {bairroSelecionado}</Text>
-                            </View>
-                        )}
-                    </View>
-
-                    {/* --- Botão Analisar Imóvel --- */}
-                    <TouchableOpacity 
-                        style={[
-                            styles.button, 
-                            (!bairroSelecionado || !valorImovel || !metrosQuadrados) && styles.buttonDisabled
-                        ]} 
-                        onPress={handlePesquisar}
-                        disabled={!bairroSelecionado || !valorImovel || !metrosQuadrados}
-                        activeOpacity={0.8}
-                    >
-                        <FontAwesome name="line-chart" size={18} color="#fff" />
-                        <Text style={styles.buttonText}>Analisar Imóvel</Text>
-                    </TouchableOpacity>
-
+                    </Text>
                 </View>
+
+                {/* --- CARD PRINCIPAL DO FORMULÁRIO --- */}
+                <View style={styles.card}>
+                    
+                    {/* Input: Valor do Imóvel */}
+                    <InputField
+                        label="Valor do Imóvel"
+                        icon={DollarSign}
+                        value={valorInput}
+                        onChangeText={handleValorChange}
+                        keyboardType="numeric"
+                        placeholder="Ex: R$ 450.000,00"
+                    />
+                    
+                    {/* Input: Metragem Quadrada */}
+                    <InputField
+                        label="Metragem Quadrada (m²)"
+                        icon={Home}
+                        value={metrosQuadrados}
+                        onChangeText={setMetrosQuadrados}
+                        keyboardType="numeric"
+                        placeholder="Ex: 85"
+                    />
+
+                    {/* Selector: Bairro do Imóvel (COM PESQUISA E SCROLL) */}
+                    <BairroSelector
+                        bairros={bairrosList}
+                        selectedBairro={bairro}
+                        onSelectBairro={setBairro}
+                    />
+
+                    {/* Botão de Análise */}
+                    <TouchableOpacity 
+                        style={[styles.analisarButton, !isButtonEnabled && styles.analisarButtonDisabled]} 
+                        onPress={handleAnalisar}
+                        activeOpacity={isButtonEnabled ? 0.8 : 1}
+                        disabled={!isButtonEnabled}
+                    >
+                        <TrendingUp size={20} color="#fff" />
+                        <Text style={styles.analisarButtonText}>Analisar Imóvel</Text>
+                    </TouchableOpacity>
+                </View>
+
             </ScrollView>
         </SafeAreaView>
     );
 };
 
+/* -------------------------------------------------------------------------- */
+/* ESTILOS REACT NATIVE                                                       */
+/* -------------------------------------------------------------------------- */
+
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: COLORS.background,
+    safeArea: { flex: 1, backgroundColor: COLORS.background },
+    scrollContent: { padding: 25 },
+    
+    // Header Centralizado
+    headerContainer: {
+        alignItems: 'center',
+        marginBottom: 30,
+        paddingHorizontal: 15,
     },
-    scrollContent: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        paddingVertical: 30,
+    // Estilo para a imagem (Logo) - TAMANHO AUMENTADO AQUI
+    headerLogo: {
+        width: 400, // Largura aumentada (antes era 250)
+        height: 100, // Altura aumentada (antes era 60)
+        resizeMode: 'contain',
+        marginBottom: 15, 
     },
-    container: {
-        width: '90%',
-        maxWidth: 500,
-        alignSelf: 'center',
-        padding: 25,
+    headerTitle: { // Mantido mas não usado, se quiser remover, pode.
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: COLORS.title,
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    headerSubtitle: {
+        fontSize: 15,
+        color: COLORS.label,
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+
+    // Card Principal (Estilizado)
+    card: {
         backgroundColor: COLORS.card,
-        borderRadius: 15,
-        shadowColor: COLORS.shadow,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
+        borderRadius: 16,
+        padding: 24,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+        elevation: 8,
+        borderWidth: 1,
+        borderColor: '#F3F4F6',
+    },
+
+    // Input Group
+    inputGroup: {
+        marginBottom: 25,
+    },
+    inputLabelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.text,
+        marginLeft: 8,
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 14,
+        fontSize: 18,
+        fontWeight: '500',
+        color: COLORS.text,
+        marginTop: 5,
+        backgroundColor: '#fff',
+    },
+    
+    // Selector (Bairro)
+    selectButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 14,
+        marginTop: 5,
+        backgroundColor: '#fff',
+    },
+    selectButtonText: {
+        fontSize: 17,
+        fontWeight: '500',
+        flex: 1, // Para ocupar o espaço e empurrar o ícone
+    },
+
+    // Botão Analisar (Estilizado)
+    analisarButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.primary,
+        borderRadius: 12,
+        paddingVertical: 16,
+        marginTop: 10,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
         shadowRadius: 10,
         elevation: 8,
     },
-    title: {
-        fontSize: 24,
+    analisarButtonDisabled: {
+        backgroundColor: '#9CA3AF',
+        shadowColor: 'transparent',
+    },
+    analisarButtonText: {
+        color: '#fff',
+        fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.text,
-        textAlign: 'center',
-        marginBottom: 8,
+        marginLeft: 10,
     },
-    subtitle: {
-        fontSize: 14,
-        color: COLORS.label,
-        textAlign: 'center',
-        marginBottom: 30,
-        lineHeight: 20,
-    },
-    inputGroup: {
-        marginBottom: 20,
-    },
-    label: {
-        fontSize: 15,
-        marginBottom: 8,
-        color: COLORS.text,
-        fontWeight: '600',
-    },
-    inputWithIcon: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderColor: COLORS.inputBorder,
-        borderWidth: 1,
-        paddingHorizontal: 15,
-        borderRadius: 10,
-        backgroundColor: COLORS.card,
-        height: 50,
-    },
-    currencyPrefix: {
-        fontSize: 16,
-        color: COLORS.label,
-        marginRight: 4,
-        fontWeight: '600',
-    },
-    textInput: {
+    
+    // --- Estilos do Modal (Bairro Selector com Busca) ---
+    modalOverlay: {
         flex: 1,
-        fontSize: 16,
-        color: COLORS.text,
-        fontWeight: '600',
-        paddingVertical: 0,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
-    // Estilos do Acordeão (Bairro)
-    accordionHeader: {
+    modalContent: {
+        backgroundColor: COLORS.card,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        maxHeight: Dimensions.get('window').height * 0.8,
+        width: '100%',
+    },
+    modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderColor: COLORS.inputBorder,
-        borderWidth: 1,
-        paddingRight: 15,
-        borderRadius: 10,
-        backgroundColor: COLORS.card,
-        height: 50,
+        marginBottom: 15,
     },
-    inputWithIconInner: {
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: COLORS.title,
+    },
+    searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        marginBottom: 15,
+        backgroundColor: COLORS.background,
     },
-    accordionTextInput: {
+    searchIcon: {
+        marginRight: 10,
+    },
+    searchInput: {
         flex: 1,
+        paddingVertical: 12,
         fontSize: 16,
         color: COLORS.text,
-        fontWeight: '600',
-        paddingVertical: 0,
-        paddingLeft: 10,
     },
-    accordionContent: {
-        borderColor: COLORS.inputBorder,
-        borderWidth: 1,
-        borderTopWidth: 0,
-        borderBottomLeftRadius: 10,
-        borderBottomRightRadius: 10,
-        backgroundColor: COLORS.card,
-        maxHeight: 200,
-        overflow: 'hidden',
+    bairroListContainer: {
+        maxHeight: Dimensions.get('window').height * 0.5, 
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
+        paddingTop: 5,
     },
-    bairroOption: {
-        padding: 12,
+    bairroListItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 5,
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    bairroText: {
+    bairroListItemText: {
         fontSize: 16,
         color: COLORS.text,
+        flex: 1,
     },
     noResultsText: {
-        padding: 12,
-        fontSize: 14,
-        color: COLORS.label,
+        padding: 15,
         textAlign: 'center',
+        color: COLORS.label,
+        fontStyle: 'italic',
     },
-    infoBox: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-        paddingHorizontal: 5,
-    },
-    infoText: {
-        fontSize: 13,
-        color: COLORS.infoText,
-        marginLeft: 5,
-        fontWeight: '500',
-    },
-    // Estilos do Botão
-    button: {
-        marginTop: 30,
-        backgroundColor: COLORS.primary,
-        paddingVertical: 15,
+    modalCloseButton: {
+        backgroundColor: COLORS.primaryLight,
         borderRadius: 10,
+        paddingVertical: 14,
+        marginTop: 20,
         alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
     },
-    buttonDisabled: {
-        backgroundColor: '#D1D5DB',
-        shadowOpacity: 0,
-        elevation: 0,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 17,
-        fontWeight: 'bold',
-        marginLeft: 10,
+    modalCloseButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.primary,
     },
 });
 
