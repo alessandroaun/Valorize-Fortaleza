@@ -10,13 +10,10 @@ import {
     TouchableOpacity
 } from 'react-native';
 
-// Ícones (use lucide-react-native ou @expo/vector-icons)
-import { MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search, ChevronLeft } from 'lucide-react-native';
-// Se preferir @expo/vector-icons
-// import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
+// Ícones
+import { ChevronLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search } from 'lucide-react-native';
 
-
-// Importa os dados dos bairros (assumindo que ele tem os campos completos agora)
+// Importa os dados dos bairros
 import BAIRROS_DATA from '../data/bairros.json';
 
 const { width } = Dimensions.get('window');
@@ -28,7 +25,7 @@ const COLORS = {
     card: '#FFFFFF',
     text: '#333333',
     label: '#6B7280',
-    title: '#1F2937', // Títulos mais escuros
+    title: '#1F2937',
     greenSuccess: '#10B981', // Verde "Excelente Negócio"
     greenLight: '#34D399', // Verde "Muito Vantajoso"
     yellowWarning: '#FBBF24', // Amarelo "Justo"
@@ -38,12 +35,12 @@ const COLORS = {
     tealCard: '#0D9488', // Azul-esverdeado para cards
     grayCard: '#4B5563', // Cinza escuro para cards
     infoBoxBg: '#E0F2FE', // Azul claro para box de dicas
-    infoBoxBorder: '#93C5FD', // Borda azul
-    infoBoxText: '#1D4ED8', // Texto azul escuro
+    infoBoxBorder: '#93C5FD',
+    infoBoxText: '#1D4ED8',
 };
 
 /* -------------------------------------------------------------------------- */
-/* TIPAGEM DOS DADOS DOS BAIRROS                                         */
+/* TIPAGEM E FUNÇÕES DE UTILIDADE                                            */
 /* -------------------------------------------------------------------------- */
 interface BairroFullData {
     bairro: string;
@@ -60,25 +57,16 @@ interface BairroFullData {
 
 interface SearchParams {
     bairro: string;
-    valor: string; // Virá como string, precisa de parseFloat
-    metrosQuadrados: string; // Virá como string, precisa de parseInt
+    valor: string;
+    metrosQuadrados: string;
 }
 
-/* -------------------------------------------------------------------------- */
-/* FUNÇÕES DE UTILIDADE (ADAPTADAS DO SEU SEGUNDO CÓDIGO)                    */
-/* -------------------------------------------------------------------------- */
-
 const formatCurrency = (value: number) =>
-    value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+    // Garante que NaN ou valores muito baixos sejam tratados como 0 para formatar
+    (isNaN(value) ? 0 : value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
-const parseCurrency = (value: string) => {
-    // Remove "R$" e pontos, substitui vírgula por ponto para parseFloat
-    return parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.'));
-};
-
-// Funções de classificação para IBEU, IDH e Condicionais (como no seu segundo código)
 const classifyIbeu = (value: string) => {
-    const num = parseFloat(value);
+    const num = parseFloat(value || '0');
     if (num >= 0.9) return { label: 'Muito Alto', color: COLORS.greenSuccess };
     if (num >= 0.8) return { label: 'Alto', color: COLORS.greenLight };
     if (num >= 0.7) return { label: 'Médio', color: COLORS.yellowWarning };
@@ -86,8 +74,8 @@ const classifyIbeu = (value: string) => {
     return { label: 'Muito Baixo', color: COLORS.redDanger };
 };
 
-const classifyIndicator = (value: string) => { // Usado para IDH, Amb. Urbanas, Hab. Urbanas
-    const num = parseFloat(value);
+const classifyIndicator = (value: string) => {
+    const num = parseFloat(value || '0');
     if (num >= 0.9) return { label: 'Excelente', color: COLORS.greenSuccess };
     if (num >= 0.8) return { label: 'Bom', color: COLORS.greenLight };
     if (num >= 0.7) return { label: 'Regular', color: COLORS.yellowWarning };
@@ -105,20 +93,20 @@ const getRNColorStyle = (colorName: string) => {
         case 'bg-indigo-600': return { backgroundColor: COLORS.indigoCard };
         case 'bg-teal-600': return { backgroundColor: COLORS.tealCard };
         case 'bg-gray-700': return { backgroundColor: COLORS.grayCard };
-        default: return { backgroundColor: COLORS.label }; // cor padrão
+        default: return { backgroundColor: COLORS.label };
     }
 };
 
 /* -------------------------------------------------------------------------- */
-/* COMPONENTES DE UI REUTILIZÁVEIS (ADAPTADOS PARA RN DAS IMAGENS)           */
+/* COMPONENTES DE UI REUTILIZÁVEIS                                           */
 /* -------------------------------------------------------------------------- */
 
 interface InfoCardProps {
     icon: React.ComponentType<{ size: number; color: string }>;
     title: string;
     value: string;
-    unit?: string; // Opcional
-    color: string; // Cor de fundo do card
+    unit?: string;
+    color: string;
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, color }) => {
@@ -131,8 +119,9 @@ const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, col
                 <Text style={styles.miniInfoCardTitle}>{title}</Text>
             </View>
             <Text style={styles.miniInfoCardValue}>
-                {value}
-                {unit && <Text style={styles.miniInfoCardUnit}>{unit}</Text>}
+                {/* Garantindo que o valor é uma string válida, mesmo que seja 'N/A' */}
+                {String(value)}
+                {unit && <Text style={styles.miniInfoCardUnit}>{String(unit)}</Text>}
             </Text>
         </View>
     );
@@ -146,14 +135,19 @@ interface IndicatorDisplayProps {
 }
 
 const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, description, classifier }) => {
-    const { label, color } = classifier(value);
-    const badgeColorStyle = getRNColorStyle(color === COLORS.greenSuccess ? 'bg-green-600' : (color === COLORS.greenLight ? 'bg-lime-500' : 'default')); // Mapeia cores específicas para o badge
+    const safeValue = String(value || '0');
+    const { label, color } = classifier(safeValue);
+    const badgeColorStyle = getRNColorStyle(color === COLORS.greenSuccess ? 'bg-green-600' : (color === COLORS.greenLight ? 'bg-lime-500' : 'default'));
+
+    const displayValue = !isNaN(parseFloat(safeValue)) && parseFloat(safeValue) > 0 
+        ? parseFloat(safeValue).toFixed(3) 
+        : 'N/A';
 
     return (
         <View style={styles.indicatorDisplayCard}>
             <Text style={styles.indicatorDisplayTitle}>{title}</Text>
             <View style={styles.indicatorDisplayRow}>
-                <Text style={styles.indicatorDisplayValue}>{parseFloat(value).toFixed(3)}</Text>
+                <Text style={styles.indicatorDisplayValue}>{displayValue}</Text>
                 <View style={[styles.indicatorDisplayBadge, badgeColorStyle]}>
                     <Text style={styles.indicatorDisplayBadgeText}>{label}</Text>
                 </View>
@@ -169,64 +163,64 @@ const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, descr
 /* -------------------------------------------------------------------------- */
 
 const ResultadoScreen = () => {
-    const params = useLocalSearchParams<SearchParams>();
+    // CORREÇÃO: Usando 'as unknown as SearchParams' para forçar a tipagem de forma mais robusta e remover a linha vermelha no ambiente de desenvolvimento.
+    const params = useLocalSearchParams() as unknown as SearchParams;
     const router = useRouter();
 
     const { bairro, valor, metrosQuadrados } = params;
 
-    // --- Lógica de Análise Principal (Como no seu segundo código) ---
+    // --- Lógica de Análise Principal ---
     const analiseData = useMemo(() => {
         if (!bairro || !valor || !metrosQuadrados) return null;
 
         const bairroData = (BAIRROS_DATA as BairroFullData[]).find(item => item.bairro === bairro);
         if (!bairroData) return null;
 
-        // Os valores já vêm limpos e numéricos do HomeScreen
-        const valorImovelNumerico = parseFloat(valor); 
-        const m2ImovelNumerico = parseInt(metrosQuadrados, 10);
+        // Garante que os valores de entrada sejam números válidos
+        const valorImovelNumerico = parseFloat(String(valor || '0'));
+        const m2ImovelNumerico = parseInt(String(metrosQuadrados || '0'), 10);
         
-        if (m2ImovelNumerico === 0) return null;
+        if (m2ImovelNumerico === 0 || isNaN(valorImovelNumerico) || isNaN(m2ImovelNumerico)) return null;
 
         const userPricePerM2 = valorImovelNumerico / m2ImovelNumerico;
 
-        // Conversão dos dados do JSON (que estão em string) para number
+        // Conversão dos dados do JSON (usa || '0' para garantir que parseFloat não retorne NaN por string vazia/undefined)
         const data = {
             ...bairroData,
-            preco_minimo_fipe_m2: parseFloat(bairroData.preco_minimo_fipe_m2),
-            preco_medio_fipe_m2: parseFloat(bairroData.preco_medio_fipe_m2),
-            preco_maximo_fipe_m2: parseFloat(bairroData.preco_maximo_fipe_m2),
-            preco_m2_olx: parseFloat(bairroData.preco_m2_olx),
-            valor_rendimento_medio_mensal: parseFloat(bairroData.valor_rendimento_medio_mensal),
+            preco_minimo_fipe_m2: parseFloat(String(bairroData.preco_minimo_fipe_m2 || '0')),
+            preco_medio_fipe_m2: parseFloat(String(bairroData.preco_medio_fipe_m2 || '0')),
+            preco_maximo_fipe_m2: parseFloat(String(bairroData.preco_maximo_fipe_m2 || '0')),
+            preco_m2_olx: parseFloat(String(bairroData.preco_m2_olx || '0')),
+            valor_rendimento_medio_mensal: parseFloat(String(bairroData.valor_rendimento_medio_mensal || '0')),
             userPricePerM2,
         };
 
         let vantagem = {
-            status: 'Justo',
-            message: 'O preço do seu m² está na faixa de mercado do bairro.',
-            color: 'bg-yellow-500', // Será mapeado para RN Style
+            status: 'PREÇO JUSTO',
+            message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está em linha com a média oficial do mercado do bairro. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`,
+            color: 'bg-yellow-500',
         };
 
-        if (userPricePerM2 < data.preco_minimo_fipe_m2 * 0.95) { // 5% abaixo do mínimo
+        if (data.preco_minimo_fipe_m2 > 0 && userPricePerM2 < data.preco_minimo_fipe_m2 * 0.95) {
             vantagem = { status: 'EXCELENTE NEGÓCIO!', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está significativamente abaixo do piso oficial (${formatCurrency(data.preco_minimo_fipe_m2)}). Além disso, seu preço está abaixo da média de anúncios do OLX (${formatCurrency(data.preco_m2_olx)}), o que é um bom indicador.`, color: 'bg-green-600' };
         } else if (userPricePerM2 < data.preco_medio_fipe_m2) {
             vantagem = { status: 'MUITO VANTAJOSO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está abaixo da média oficial de mercado do bairro. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-lime-500' };
         } else if (userPricePerM2 > data.preco_maximo_fipe_m2) {
             vantagem = { status: 'PREÇO ELEVADO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está acima do teto oficial de mercado. Reavalie. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-red-600' };
-        } else {
-             vantagem = { status: 'PREÇO JUSTO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está em linha com a média oficial do mercado do bairro. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-yellow-500' };
         }
         
-        return { ...data, vantagem };
+        return { ...data, vantagem, m2ImovelNumerico: m2ImovelNumerico };
     }, [bairro, valor, metrosQuadrados]);
 
 
     if (!analiseData) {
         return (
             <SafeAreaView style={styles.safeArea}>
+                <Stack.Screen options={{ headerShown: false }} />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>
-                        Não foi possível carregar os dados de análise para o bairro "{bairro}".
-                        Verifique se o bairro está cadastrado ou se há dados suficientes.
+                        Não foi possível carregar os dados de análise para o bairro "{bairro || 'N/A'}".
+                        Verifique se o bairro está cadastrado ou se há dados suficientes no arquivo de bairros.
                     </Text>
                     <TouchableOpacity onPress={() => router.replace('/')} style={styles.retryButton}>
                          <Text style={styles.retryButtonText}>Voltar para o Início</Text>
@@ -244,19 +238,17 @@ const ResultadoScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <Stack.Screen options={{ 
-                headerShown: false, // Desabilitamos o header padrão para criar um customizado
-            }} />
+            <Stack.Screen options={{ headerShown: false }} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 
-                {/* --- HEADER PERSONALIZADO (como na Image 2) --- */}
+                {/* --- HEADER PERSONALIZADO --- */}
                 <View style={styles.customHeader}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <ChevronLeft size={24} color={COLORS.primary} />
                         <Text style={styles.backButtonText}>Voltar</Text>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Análise para {data.bairro}</Text>
-                    <View style={{width: 70}} /> {/* Espaçador para alinhar o título */}
+                    <Text style={styles.headerTitle} numberOfLines={1}>Análise para {data.bairro}</Text>
+                    <View style={{width: 70}} />
                 </View>
 
                 {/* --- BOX DE RECOMENDAÇÃO (Image 2) --- */}
@@ -278,16 +270,31 @@ const ResultadoScreen = () => {
                 <View style={styles.cardGrid}>
                     <InfoCard
                         icon={DollarSign}
+                        title="VALOR TOTAL INFORMADO"
+                        value={formatCurrency(data.userPricePerM2 * data.m2ImovelNumerico)}
+                        unit=""
+                        color="bg-gray-700" // Mudei para gray para destacar que é o dado do usuário
+                    />
+                    <InfoCard
+                        icon={Home}
+                        title="METRAGEM INFORMADA"
+                        value={String(data.m2ImovelNumerico)}
+                        unit=" m²"
+                        color="bg-gray-700"
+                    />
+
+                    <InfoCard
+                        icon={DollarSign}
                         title="PREÇO MÉDIO FIPE"
                         value={formatCurrency(data.preco_medio_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
                     />
                     <InfoCard
-                        icon={Search} // Ícone de busca para OLX
+                        icon={Search}
                         title="PREÇO MÉDIO OLX"
                         value={formatCurrency(data.preco_m2_olx)}
-                        unit="/ m² (Anúncios)"
+                        unit="/ m²"
                         color="bg-teal-600"
                     />
                     <InfoCard
@@ -295,14 +302,14 @@ const ResultadoScreen = () => {
                         title="PREÇO MÍNIMO FIPE"
                         value={formatCurrency(data.preco_minimo_fipe_m2)}
                         unit="/ m²"
-                        color="bg-indigo-600" // Mantido como indigo
+                        color="bg-indigo-600"
                     />
                     <InfoCard
                         icon={DollarSign}
                         title="PREÇO MÁXIMO FIPE"
                         value={formatCurrency(data.preco_maximo_fipe_m2)}
                         unit="/ m²"
-                        color="bg-indigo-600" // Mantido como indigo
+                        color="bg-indigo-600"
                     />
                 </View>
 
@@ -337,7 +344,7 @@ const ResultadoScreen = () => {
                 </View>
                 
                 {/* --- RENDIMENTO MÉDIO MENSAL FAMILIAR (Image 4) --- */}
-                <View style={[styles.miniInfoCard, { backgroundColor: COLORS.grayCard, width: '100%', marginTop: 5 }]}>
+                <View style={[styles.miniInfoCard, { backgroundColor: COLORS.grayCard, width: '100%', marginTop: 5, marginBottom: 20 }]}>
                     <View style={styles.miniInfoCardHeader}>
                         <Users size={16} color="#fff" />
                         <Text style={styles.miniInfoCardTitle}>RENDIMENTO MÉDIO MENSAL FAMILIAR</Text>
@@ -354,9 +361,9 @@ const ResultadoScreen = () => {
                         <Text style={styles.dicaTitle}>Decisão de Compra</Text>
                     </View>
                     <Text style={styles.dicaText}>
-                        Se o seu preço/m² estiver **abaixo** do Preço Médio FIPE, a compra
+                        Se o seu preço/m² estiver <Text style={{fontWeight: 'bold'}}>abaixo</Text> do Preço Médio FIPE, a compra
                         é considerada um bom investimento com potencial de valorização
-                        imediata. Analise a classificação do **IBEU** e **IDH** para entender
+                        imediata. Analise a classificação do <Text style={{fontWeight: 'bold'}}>IBEU</Text> e <Text style={{fontWeight: 'bold'}}>IDH</Text> para entender
                         a qualidade de vida e o desenvolvimento social do bairro.
                     </Text>
                 </View>
@@ -381,7 +388,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: 10,
         paddingHorizontal: 5,
-        backgroundColor: COLORS.card, // Fundo branco
+        backgroundColor: COLORS.card,
         borderBottomWidth: 1,
         borderBottomColor: '#EEE',
         marginBottom: 15,
@@ -408,13 +415,16 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: COLORS.title,
+        flex: 1,
+        textAlign: 'center',
+        marginHorizontal: 10,
     },
 
-    // --- Box de Recomendação Principal (Verde/Vermelho/Amarelo) ---
+    // --- Box de Recomendação Principal ---
     recommendationBox: {
         padding: 20,
         borderRadius: 12,
-        shadowColor: 'rgba(0,0,0,0.15)', // Sombra mais forte
+        shadowColor: 'rgba(0,0,0,0.15)',
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.2,
         shadowRadius: 10,
@@ -428,21 +438,21 @@ const styles = StyleSheet.create({
     },
     recommendationBoxStatus: {
         fontSize: 18,
-        fontWeight: '800', // Extra bold
+        fontWeight: '800',
         color: '#fff',
         marginLeft: 10,
         textTransform: 'uppercase',
     },
     recommendationBoxPrice: {
-        fontSize: 32, // Tamanho grande para destaque
-        fontWeight: '900', // Ultra bold
+        fontSize: 32,
+        fontWeight: '900',
         color: '#fff',
         marginTop: 5,
     },
     recommendationBoxUnit: {
         fontSize: 14,
         fontWeight: '400',
-        color: 'rgba(255,255,255,0.85)', // Opacidade para contraste
+        color: 'rgba(255,255,255,0.85)',
     },
     recommendationBoxMessage: {
         fontSize: 14,
@@ -459,7 +469,7 @@ const styles = StyleSheet.create({
         marginTop: 25,
         marginBottom: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB', // Cinza claro para a linha
+        borderBottomColor: '#E5E7EB',
         paddingBottom: 8,
     },
 
@@ -472,7 +482,7 @@ const styles = StyleSheet.create({
     },
     // Mini Info Cards (Preço FIPE, OLX, Rendimento)
     miniInfoCard: {
-        width: '48%', // Dois cards por linha
+        width: '48%',
         padding: 15,
         borderRadius: 10,
         marginBottom: 15,
@@ -497,7 +507,7 @@ const styles = StyleSheet.create({
         opacity: 0.8,
     },
     miniInfoCardValue: {
-        fontSize: 22, // Tamanho maior
+        fontSize: 22,
         fontWeight: '800',
         color: '#fff',
         marginTop: 5,
@@ -510,7 +520,7 @@ const styles = StyleSheet.create({
 
     // Cards de Indicador (IBEU, IDH, etc.)
     indicatorDisplayCard: {
-        width: '48%', // Dois cards por linha
+        width: '48%',
         padding: 15,
         backgroundColor: COLORS.card,
         borderRadius: 10,
@@ -521,7 +531,7 @@ const styles = StyleSheet.create({
         elevation: 2,
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: '#F3F4F6', // Borda sutil
+        borderColor: '#F3F4F6',
     },
     indicatorDisplayTitle: {
         fontSize: 13,
@@ -542,7 +552,7 @@ const styles = StyleSheet.create({
     },
     indicatorDisplayBadge: {
         paddingHorizontal: 10,
-        paddingVertical: 4, // Um pouco maior
+        paddingVertical: 4,
         borderRadius: 15,
     },
     indicatorDisplayBadgeText: {
@@ -553,7 +563,7 @@ const styles = StyleSheet.create({
     indicatorDisplayDescription: {
         fontSize: 10,
         color: COLORS.label,
-        marginTop: 8, // Mais espaçamento
+        marginTop: 8,
         lineHeight: 14,
     },
 
