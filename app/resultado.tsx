@@ -7,7 +7,10 @@ import {
     Text,
     View,
     Dimensions,
-    TouchableOpacity
+    TouchableOpacity,
+    StyleProp, 
+    TextStyle, 
+    ViewStyle // Importações adicionadas para tipagem dos novos estilos
 } from 'react-native';
 
 // Ícones
@@ -40,7 +43,7 @@ const COLORS = {
 };
 
 /* -------------------------------------------------------------------------- */
-/* TIPAGEM E FUNÇÕES DE UTILIDADE                                            */
+/* TIPAGEM E FUNÇÕES DE UTILIDADE                                            */
 /* -------------------------------------------------------------------------- */
 interface BairroFullData {
     bairro: string;
@@ -98,7 +101,7 @@ const getRNColorStyle = (colorName: string) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* COMPONENTES DE UI REUTILIZÁVEIS                                           */
+/* COMPONENTES DE UI REUTILIZÁVEIS                                           */
 /* -------------------------------------------------------------------------- */
 
 interface InfoCardProps {
@@ -107,20 +110,30 @@ interface InfoCardProps {
     value: string;
     unit?: string;
     color: string;
+    // Novos campos para customização de estilo:
+    valueStyle?: StyleProp<TextStyle>;
+    containerStyle?: StyleProp<ViewStyle>;
 }
 
-const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, color }) => {
+const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, color, valueStyle, containerStyle }) => {
     const colorStyle = getRNColorStyle(color);
     
     return (
-        <View style={[styles.miniInfoCard, colorStyle]}>
+        // Aplica o estilo personalizado ao container
+        <View style={[styles.miniInfoCard, colorStyle, containerStyle]}>
             <View style={styles.miniInfoCardHeader}>
                 <Icon size={16} color="#fff" />
                 <Text style={styles.miniInfoCardTitle}>{title}</Text>
             </View>
-            <Text style={styles.miniInfoCardValue}>
+            {/* Aplica valueStyle e garante que não quebre linha (numberOfLines/ellipsizeMode) */}
+            <Text 
+                style={[styles.miniInfoCardValue, valueStyle]}
+                numberOfLines={1}
+                ellipsizeMode="tail" // Trunca o texto com '...' se for muito longo
+            >
                 {/* Garantindo que o valor é uma string válida, mesmo que seja 'N/A' */}
                 {String(value)}
+                {/* O unit usa seu estilo padrão, mas é afetado pela centralização do container */}
                 {unit && <Text style={styles.miniInfoCardUnit}>{String(unit)}</Text>}
             </Text>
         </View>
@@ -159,7 +172,7 @@ const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, descr
 
 
 /* -------------------------------------------------------------------------- */
-/* TELA PRINCIPAL DE RESULTADO                                               */
+/* TELA PRINCIPAL DE RESULTADO                                               */
 /* -------------------------------------------------------------------------- */
 
 const ResultadoScreen = () => {
@@ -202,11 +215,11 @@ const ResultadoScreen = () => {
         };
 
         if (data.preco_minimo_fipe_m2 > 0 && userPricePerM2 < data.preco_minimo_fipe_m2 * 0.95) {
-            vantagem = { status: 'EXCELENTE NEGÓCIO!', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está significativamente abaixo do piso oficial (${formatCurrency(data.preco_minimo_fipe_m2)}). Além disso, seu preço está abaixo da média de anúncios do OLX (${formatCurrency(data.preco_m2_olx)}), o que é um bom indicador.`, color: 'bg-green-600' };
+            vantagem = { status: 'EXCELENTE NEGÓCIO!', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está significativamente abaixo do Preço Mínimo da FIPE dos imóveis (${formatCurrency(data.preco_minimo_fipe_m2)}). Além disso, seu preço está abaixo da média de anúncios do OLX (${formatCurrency(data.preco_m2_olx)}), o que é um bom indicador.`, color: 'bg-green-600' };
         } else if (userPricePerM2 < data.preco_medio_fipe_m2) {
             vantagem = { status: 'MUITO VANTAJOSO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está abaixo da média oficial de mercado do bairro. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-lime-500' };
         } else if (userPricePerM2 > data.preco_maximo_fipe_m2) {
-            vantagem = { status: 'PREÇO ELEVADO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está acima do teto oficial de mercado. Reavalie. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-red-600' };
+            vantagem = { status: 'PREÇO ELEVADO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está acima do valor oficial de mercado. Reavalie. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-red-600' };
         }
         
         return { ...data, vantagem, m2ImovelNumerico: m2ImovelNumerico };
@@ -223,7 +236,7 @@ const ResultadoScreen = () => {
                         Verifique se o bairro está cadastrado ou se há dados suficientes no arquivo de bairros.
                     </Text>
                     <TouchableOpacity onPress={() => router.replace('/')} style={styles.retryButton}>
-                         <Text style={styles.retryButtonText}>Voltar para o Início</Text>
+                            <Text style={styles.retryButtonText}>Voltar para o Início</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -248,7 +261,7 @@ const ResultadoScreen = () => {
                         <Text style={styles.backButtonText}>Voltar</Text>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle} numberOfLines={1}>Análise para {data.bairro}</Text>
-                    <View style={{width: 70}} />
+                    <View style={{width: 0}} />
                 </View>
 
                 {/* --- BOX DE RECOMENDAÇÃO (Image 2) --- */}
@@ -273,7 +286,9 @@ const ResultadoScreen = () => {
                         title="VALOR TOTAL INFORMADO"
                         value={formatCurrency(data.userPricePerM2 * data.m2ImovelNumerico)}
                         unit=""
-                        color="bg-gray-700" // Mudei para gray para destacar que é o dado do usuário
+                        color="bg-gray-700" 
+                        // Alteração: O valor agora respeita a largura do card (numberOfLines={1} no InfoCard)
+                        valueStyle={styles.miniInfoCardValueXSmall} // 👈 APLICAÇÃO DO NOVO ESTILO
                     />
                     <InfoCard
                         icon={Home}
@@ -281,6 +296,9 @@ const ResultadoScreen = () => {
                         value={String(data.m2ImovelNumerico)}
                         unit=" m²"
                         color="bg-gray-700"
+                        // Alteração: Aplica estilos para centralizar e aumentar o tamanho
+                        containerStyle={styles.miniInfoCardCenterContent}
+                        valueStyle={styles.miniInfoCardValueGiant}
                     />
 
                     <InfoCard
@@ -289,6 +307,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_medio_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
+                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
                     />
                     <InfoCard
                         icon={Search}
@@ -296,6 +315,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_m2_olx)}
                         unit="/ m²"
                         color="bg-teal-600"
+                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
                     />
                     <InfoCard
                         icon={DollarSign}
@@ -303,6 +323,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_minimo_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
+                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
                     />
                     <InfoCard
                         icon={DollarSign}
@@ -310,6 +331,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_maximo_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
+                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
                     />
                 </View>
 
@@ -332,7 +354,7 @@ const ResultadoScreen = () => {
                     <IndicatorDisplay
                         title="Condições Ambientais Urbanas"
                         value={data.condicoes_ambientais_urbanas}
-                        description="Qualidade do ar, saneamento, etc."
+                        description="Qualidade do ar, saneamento, etc. (1 é melhor)."
                         classifier={classifyIndicator}
                     />
                     <IndicatorDisplay
@@ -347,7 +369,7 @@ const ResultadoScreen = () => {
                 <View style={[styles.miniInfoCard, { backgroundColor: COLORS.grayCard, width: '100%', marginTop: 5, marginBottom: 20 }]}>
                     <View style={styles.miniInfoCardHeader}>
                         <Users size={16} color="#fff" />
-                        <Text style={styles.miniInfoCardTitle}>RENDIMENTO MÉDIO MENSAL FAMILIAR</Text>
+                        <Text style={styles.miniInfoCardTitle}>RENDIMENTO MÉDIO MENSAL FAMILIAR  DO BAIRRO</Text>
                     </View>
                     <Text style={styles.miniInfoCardValue}>
                         {formatCurrency(data.valor_rendimento_medio_mensal)}
@@ -374,7 +396,7 @@ const ResultadoScreen = () => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* ESTILOS REACT NATIVE (CORRESPONDENTES ÀS IMAGENS)                         */
+/* ESTILOS REACT NATIVE (CORRESPONDENTES ÀS IMAGENS)                         */
 /* -------------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
@@ -396,28 +418,27 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowRadius: 6,
         elevation: 1,
     },
     backButton: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 5,
-        paddingHorizontal: 10,
+        paddingHorizontal: 1,
     },
     backButtonText: {
         color: COLORS.primary,
         fontSize: 16,
-        marginLeft: 5,
+        marginLeft: 0,
         fontWeight: '600',
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: 15,
         fontWeight: 'bold',
         color: COLORS.title,
         flex: 1,
-        textAlign: 'center',
-        marginHorizontal: 10,
+        marginHorizontal: 20,
     },
 
     // --- Box de Recomendação Principal ---
@@ -429,25 +450,28 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 10,
         elevation: 10,
-        marginBottom: 20,
+        marginBottom: 5,
     },
     recommendationBoxHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 8,
+        textAlign: 'center',
     },
     recommendationBoxStatus: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: '800',
         color: '#fff',
         marginLeft: 10,
         textTransform: 'uppercase',
+        textAlign: 'center',
     },
     recommendationBoxPrice: {
         fontSize: 32,
         fontWeight: '900',
         color: '#fff',
         marginTop: 5,
+        textAlign: 'center',
     },
     recommendationBoxUnit: {
         fontSize: 14,
@@ -459,6 +483,7 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.9)',
         marginTop: 10,
         lineHeight: 20,
+        textAlign: 'center',
     },
 
     // --- Títulos de Seção ---
@@ -486,12 +511,16 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         marginBottom: 15,
-        shadowColor: 'rgba(0,0,0,0.08)',
+        shadowColor: 'rgba(219, 8, 8, 0.08)',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
         justifyContent: 'space-between',
+    },
+    // NOVO: Estilo para centralizar o conteúdo (Usado em "Metragem Informada")
+    miniInfoCardCenterContent: {
+        alignItems: 'center', // Centraliza o conteúdo horizontalmente
     },
     miniInfoCardHeader: {
         flexDirection: 'row',
@@ -507,10 +536,29 @@ const styles = StyleSheet.create({
         opacity: 0.8,
     },
     miniInfoCardValue: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: '800',
         color: '#fff',
         marginTop: 5,
+    },
+    // NOVO: Estilo para o valor do Valor Total Informado (Tamanho menor) 👈 NOVO ESTILO
+    miniInfoCardValueXSmall: {
+        fontSize: 18, // Tamanho reduzido
+        fontWeight: '800',
+        color: '#fff',
+        marginTop: 5,
+    },
+    // NOVO: Estilo para o valor de Preço/m² (Tamanho menor para caber) 
+    miniInfoCardValueSmall: {
+        fontSize: 18, // Tamanho menor
+        fontWeight: '800', // Mantém a intensidade
+        color: '#fff',
+        marginTop: 5,
+    },
+    // NOVO: Estilo para o valor da Metragem (Tamanho maior)
+    miniInfoCardValueGiant: {
+        fontSize: 30, // Tamanho maior
+        fontWeight: '900',
     },
     miniInfoCardUnit: {
         fontSize: 12,
@@ -534,7 +582,7 @@ const styles = StyleSheet.create({
         borderColor: '#F3F4F6',
     },
     indicatorDisplayTitle: {
-        fontSize: 13,
+        fontSize: 15, // AUMENTADO de 13 para 15
         fontWeight: '600',
         color: COLORS.label,
         marginBottom: 5,
@@ -546,7 +594,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     indicatorDisplayValue: {
-        fontSize: 20,
+        fontSize: 24, // AUMENTADO de 20 para 24
         fontWeight: '700',
         color: COLORS.text,
     },
@@ -556,15 +604,16 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
     indicatorDisplayBadgeText: {
-        fontSize: 10,
+        fontSize: 12, // AUMENTADO de 10 para 12
         fontWeight: '700',
         color: '#fff',
     },
     indicatorDisplayDescription: {
-        fontSize: 10,
+        fontSize: 12, // AUMENTADO de 10 para 12
         color: COLORS.label,
         marginTop: 8,
-        lineHeight: 14,
+        lineHeight: 12, // Ajuste o lineHeight para acomodar o novo tamanho da fonte, se necessário
+        textAlign: 'center',
     },
 
     // --- Dica de Decisão de Compra ---
@@ -590,12 +639,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: COLORS.infoBoxText,
         marginLeft: 8,
-        fontSize: 15,
+        fontSize: 25,
     },
     dicaText: {
-        fontSize: 13,
+        fontSize: 15,
         color: COLORS.text,
         lineHeight: 19,
+        textAlign: 'justify',
     },
 
     // --- Estilos de Erro ---
