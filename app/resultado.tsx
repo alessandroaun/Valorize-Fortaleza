@@ -10,41 +10,35 @@ import {
     TouchableOpacity,
     StyleProp, 
     TextStyle, 
-    ViewStyle // Importações adicionadas para tipagem dos novos estilos
+    ViewStyle
 } from 'react-native';
 
-// Ícones
 import { ChevronLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search } from 'lucide-react-native';
 
-// Importa os dados dos bairros
 import BAIRROS_DATA from '../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
-// --- DEFINIÇÃO DE CORES (Baseadas nas imagens) ---
 const COLORS = {
-    primary: '#6C5CE7', // Roxo principal
-    background: '#F8F8F8', // Fundo cinza claro
+    primary: '#6C5CE7',
+    background: '#F8F8F8',
     card: '#FFFFFF',
     text: '#333333',
     label: '#6B7280',
     title: '#1F2937',
-    greenSuccess: '#10B981', // Verde "Excelente Negócio"
-    greenLight: '#34D399', // Verde "Muito Vantajoso"
-    yellowWarning: '#FBBF24', // Amarelo "Justo"
-    orangeAlert: '#FB923C', // Laranja
-    redDanger: '#EF4444', // Vermelho "Preço Elevado"
-    indigoCard: '#4F46E5', // Azul índigo para cards
-    tealCard: '#0D9488', // Azul-esverdeado para cards
-    grayCard: '#4B5563', // Cinza escuro para cards
-    infoBoxBg: '#E0F2FE', // Azul claro para box de dicas
+    greenSuccess: '#10B981',
+    greenLight: '#34D399',
+    yellowWarning: '#FBBF24',
+    orangeAlert: '#FB923C',
+    redDanger: '#EF4444',
+    indigoCard: '#4F46E5',
+    tealCard: '#0D9488',
+    grayCard: '#4B5563',
+    infoBoxBg: '#E0F2FE',
     infoBoxBorder: '#93C5FD',
     infoBoxText: '#1D4ED8',
 };
 
-/* -------------------------------------------------------------------------- */
-/* TIPAGEM E FUNÇÕES DE UTILIDADE                                            */
-/* -------------------------------------------------------------------------- */
 interface BairroFullData {
     bairro: string;
     preco_minimo_fipe_m2: string;
@@ -65,7 +59,6 @@ interface SearchParams {
 }
 
 const formatCurrency = (value: number) =>
-    // Garante que NaN ou valores muito baixos sejam tratados como 0 para formatar
     (isNaN(value) ? 0 : value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
 const classifyIbeu = (value: string) => {
@@ -85,7 +78,6 @@ const classifyIndicator = (value: string) => {
     return { label: 'Ruim', color: COLORS.redDanger };
 };
 
-// Mapeamento de cores de fundo do Tailwind para estilos RN (com as cores da imagem)
 const getRNColorStyle = (colorName: string) => {
     switch (colorName) {
         case 'bg-green-600': return { backgroundColor: COLORS.greenSuccess };
@@ -100,17 +92,12 @@ const getRNColorStyle = (colorName: string) => {
     }
 };
 
-/* -------------------------------------------------------------------------- */
-/* COMPONENTES DE UI REUTILIZÁVEIS                                           */
-/* -------------------------------------------------------------------------- */
-
 interface InfoCardProps {
     icon: React.ComponentType<{ size: number; color: string }>;
     title: string;
     value: string;
     unit?: string;
     color: string;
-    // Novos campos para customização de estilo:
     valueStyle?: StyleProp<TextStyle>;
     containerStyle?: StyleProp<ViewStyle>;
 }
@@ -119,21 +106,17 @@ const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, col
     const colorStyle = getRNColorStyle(color);
     
     return (
-        // Aplica o estilo personalizado ao container
         <View style={[styles.miniInfoCard, colorStyle, containerStyle]}>
             <View style={styles.miniInfoCardHeader}>
                 <Icon size={16} color="#fff" />
                 <Text style={styles.miniInfoCardTitle}>{title}</Text>
             </View>
-            {/* Aplica valueStyle e garante que não quebre linha (numberOfLines/ellipsizeMode) */}
             <Text 
                 style={[styles.miniInfoCardValue, valueStyle]}
                 numberOfLines={1}
-                ellipsizeMode="tail" // Trunca o texto com '...' se for muito longo
+                ellipsizeMode="tail"
             >
-                {/* Garantindo que o valor é uma string válida, mesmo que seja 'N/A' */}
                 {String(value)}
-                {/* O unit usa seu estilo padrão, mas é afetado pela centralização do container */}
                 {unit && <Text style={styles.miniInfoCardUnit}>{String(unit)}</Text>}
             </Text>
         </View>
@@ -170,26 +153,18 @@ const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, descr
     );
 };
 
-
-/* -------------------------------------------------------------------------- */
-/* TELA PRINCIPAL DE RESULTADO                                               */
-/* -------------------------------------------------------------------------- */
-
 const ResultadoScreen = () => {
-    // CORREÇÃO: Usando 'as unknown as SearchParams' para forçar a tipagem de forma mais robusta e remover a linha vermelha no ambiente de desenvolvimento.
     const params = useLocalSearchParams() as unknown as SearchParams;
     const router = useRouter();
 
     const { bairro, valor, metrosQuadrados } = params;
 
-    // --- Lógica de Análise Principal ---
     const analiseData = useMemo(() => {
         if (!bairro || !valor || !metrosQuadrados) return null;
 
         const bairroData = (BAIRROS_DATA as BairroFullData[]).find(item => item.bairro === bairro);
         if (!bairroData) return null;
 
-        // Garante que os valores de entrada sejam números válidos
         const valorImovelNumerico = parseFloat(String(valor || '0'));
         const m2ImovelNumerico = parseInt(String(metrosQuadrados || '0'), 10);
         
@@ -197,7 +172,6 @@ const ResultadoScreen = () => {
 
         const userPricePerM2 = valorImovelNumerico / m2ImovelNumerico;
 
-        // Conversão dos dados do JSON (usa || '0' para garantir que parseFloat não retorne NaN por string vazia/undefined)
         const data = {
             ...bairroData,
             preco_minimo_fipe_m2: parseFloat(String(bairroData.preco_minimo_fipe_m2 || '0')),
@@ -243,7 +217,6 @@ const ResultadoScreen = () => {
         );
     }
     
-    // Desestrutura os dados para facilitar o uso
     const data = analiseData;
     const { status, message, color: statusColor } = data.vantagem;
     const vantagemColorStyle = getRNColorStyle(statusColor);
@@ -254,7 +227,6 @@ const ResultadoScreen = () => {
             <Stack.Screen options={{ headerShown: false }} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 
-                {/* --- HEADER PERSONALIZADO --- */}
                 <View style={styles.customHeader}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <ChevronLeft size={24} color={COLORS.primary} />
@@ -264,7 +236,6 @@ const ResultadoScreen = () => {
                     <View style={{width: 0}} />
                 </View>
 
-                {/* --- BOX DE RECOMENDAÇÃO (Image 2) --- */}
                 <View style={[styles.recommendationBox, vantagemColorStyle]}>
                     <View style={styles.recommendationBoxHeader}>
                         <TrendingUp size={24} color="#fff" />
@@ -277,7 +248,6 @@ const ResultadoScreen = () => {
                     <Text style={styles.recommendationBoxMessage}>{message}</Text>
                 </View>
 
-                {/* --- COMPARAÇÃO DE MERCADO (Image 2 e 3) --- */}
                 <Text style={styles.sectionTitle}>Comparação de Mercado (Preço/m²)</Text>
                 
                 <View style={styles.cardGrid}>
@@ -287,8 +257,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.userPricePerM2 * data.m2ImovelNumerico)}
                         unit=""
                         color="bg-gray-700" 
-                        // Alteração: O valor agora respeita a largura do card (numberOfLines={1} no InfoCard)
-                        valueStyle={styles.miniInfoCardValueXSmall} // 👈 APLICAÇÃO DO NOVO ESTILO
+                        valueStyle={styles.miniInfoCardValueXSmall}
                     />
                     <InfoCard
                         icon={Home}
@@ -296,7 +265,6 @@ const ResultadoScreen = () => {
                         value={String(data.m2ImovelNumerico)}
                         unit=" m²"
                         color="bg-gray-700"
-                        // Alteração: Aplica estilos para centralizar e aumentar o tamanho
                         containerStyle={styles.miniInfoCardCenterContent}
                         valueStyle={styles.miniInfoCardValueGiant}
                     />
@@ -307,7 +275,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_medio_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
-                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
+                        valueStyle={styles.miniInfoCardValueSmall}
                     />
                     <InfoCard
                         icon={Search}
@@ -315,7 +283,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_m2_olx)}
                         unit="/ m²"
                         color="bg-teal-600"
-                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
+                        valueStyle={styles.miniInfoCardValueSmall}
                     />
                     <InfoCard
                         icon={DollarSign}
@@ -323,7 +291,7 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_minimo_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
-                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
+                        valueStyle={styles.miniInfoCardValueSmall}
                     />
                     <InfoCard
                         icon={DollarSign}
@@ -331,11 +299,10 @@ const ResultadoScreen = () => {
                         value={formatCurrency(data.preco_maximo_fipe_m2)}
                         unit="/ m²"
                         color="bg-indigo-600"
-                        valueStyle={styles.miniInfoCardValueSmall} // 👈 ALTERAÇÃO: Novo estilo para valores de preço/m²
+                        valueStyle={styles.miniInfoCardValueSmall}
                     />
                 </View>
 
-                {/* --- INDICADORES SOCIOECONÔMICOS (Image 3 e 4) --- */}
                 <Text style={styles.sectionTitle}>Indicadores Socioeconômicos</Text>
 
                 <View style={styles.cardGrid}>
@@ -365,18 +332,16 @@ const ResultadoScreen = () => {
                     />
                 </View>
                 
-                {/* --- RENDIMENTO MÉDIO MENSAL FAMILIAR (Image 4) --- */}
                 <View style={[styles.miniInfoCard, { backgroundColor: COLORS.grayCard, width: '100%', marginTop: 5, marginBottom: 20 }]}>
                     <View style={styles.miniInfoCardHeader}>
                         <Users size={16} color="#fff" />
-                        <Text style={styles.miniInfoCardTitle}>RENDIMENTO MÉDIO MENSAL FAMILIAR  DO BAIRRO</Text>
+                        <Text style={styles.miniInfoCardTitle}>RENDIMENTO MÉDIO MENSAL FAMILIAR DO BAIRRO</Text>
                     </View>
                     <Text style={styles.miniInfoCardValue}>
                         {formatCurrency(data.valor_rendimento_medio_mensal)}
                     </Text>
                 </View>
 
-                {/* --- DICA DE DECISÃO DE COMPRA (Image 4) --- */}
                 <View style={styles.dicaBox}>
                     <View style={styles.dicaHeader}>
                         <Zap size={18} color={COLORS.infoBoxText} />
@@ -395,15 +360,10 @@ const ResultadoScreen = () => {
     );
 };
 
-/* -------------------------------------------------------------------------- */
-/* ESTILOS REACT NATIVE (CORRESPONDENTES ÀS IMAGENS)                         */
-/* -------------------------------------------------------------------------- */
-
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: COLORS.background },
     scrollContent: { padding: 15, paddingBottom: 30 },
     
-    // --- Header Personalizado ---
     customHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -441,7 +401,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
     },
 
-    // --- Box de Recomendação Principal ---
     recommendationBox: {
         padding: 20,
         borderRadius: 12,
@@ -486,7 +445,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 
-    // --- Títulos de Seção ---
     sectionTitle: {
         fontSize: 18,
         fontWeight: '700',
@@ -498,14 +456,12 @@ const styles = StyleSheet.create({
         paddingBottom: 8,
     },
 
-    // --- Grid para Cards de Informação e Indicadores ---
     cardGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginBottom: 10,
     },
-    // Mini Info Cards (Preço FIPE, OLX, Rendimento)
     miniInfoCard: {
         width: '48%',
         padding: 15,
@@ -518,9 +474,8 @@ const styles = StyleSheet.create({
         elevation: 3,
         justifyContent: 'space-between',
     },
-    // NOVO: Estilo para centralizar o conteúdo (Usado em "Metragem Informada")
     miniInfoCardCenterContent: {
-        alignItems: 'center', // Centraliza o conteúdo horizontalmente
+        alignItems: 'center',
     },
     miniInfoCardHeader: {
         flexDirection: 'row',
@@ -541,23 +496,20 @@ const styles = StyleSheet.create({
         color: '#fff',
         marginTop: 5,
     },
-    // NOVO: Estilo para o valor do Valor Total Informado (Tamanho menor) 👈 NOVO ESTILO
     miniInfoCardValueXSmall: {
-        fontSize: 18, // Tamanho reduzido
+        fontSize: 18,
         fontWeight: '800',
         color: '#fff',
         marginTop: 5,
     },
-    // NOVO: Estilo para o valor de Preço/m² (Tamanho menor para caber) 
     miniInfoCardValueSmall: {
-        fontSize: 18, // Tamanho menor
-        fontWeight: '800', // Mantém a intensidade
+        fontSize: 18,
+        fontWeight: '800',
         color: '#fff',
         marginTop: 5,
     },
-    // NOVO: Estilo para o valor da Metragem (Tamanho maior)
     miniInfoCardValueGiant: {
-        fontSize: 30, // Tamanho maior
+        fontSize: 30,
         fontWeight: '900',
     },
     miniInfoCardUnit: {
@@ -566,7 +518,6 @@ const styles = StyleSheet.create({
         opacity: 0.75,
     },
 
-    // Cards de Indicador (IBEU, IDH, etc.)
     indicatorDisplayCard: {
         width: '48%',
         padding: 15,
@@ -582,7 +533,7 @@ const styles = StyleSheet.create({
         borderColor: '#F3F4F6',
     },
     indicatorDisplayTitle: {
-        fontSize: 15, // AUMENTADO de 13 para 15
+        fontSize: 15,
         fontWeight: '600',
         color: COLORS.label,
         marginBottom: 5,
@@ -594,7 +545,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     indicatorDisplayValue: {
-        fontSize: 24, // AUMENTADO de 20 para 24
+        fontSize: 24,
         fontWeight: '700',
         color: COLORS.text,
     },
@@ -604,19 +555,18 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
     indicatorDisplayBadgeText: {
-        fontSize: 12, // AUMENTADO de 10 para 12
+        fontSize: 12,
         fontWeight: '700',
         color: '#fff',
     },
     indicatorDisplayDescription: {
-        fontSize: 12, // AUMENTADO de 10 para 12
+        fontSize: 12,
         color: COLORS.label,
         marginTop: 8,
-        lineHeight: 12, // Ajuste o lineHeight para acomodar o novo tamanho da fonte, se necessário
+        lineHeight: 12,
         textAlign: 'center',
     },
 
-    // --- Dica de Decisão de Compra ---
     dicaBox: {
         padding: 18,
         backgroundColor: COLORS.infoBoxBg,
@@ -648,7 +598,6 @@ const styles = StyleSheet.create({
         textAlign: 'justify',
     },
 
-    // --- Estilos de Erro ---
     errorContainer: {
         flex: 1,
         justifyContent: 'center',

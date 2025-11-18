@@ -16,19 +16,18 @@ import {
     Image
 } from 'react-native';
 
-// Ícones
 import { DollarSign, Home, MapPin, TrendingUp, ChevronDown, Check, Search, X } from 'lucide-react-native';
 
-// Importa os dados dos bairros
+//Alessandro: Necessário instalar o lucide-react-native via npm.// 
+
 import BAIRROS_DATA from '../../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
-// --- DEFINIÇÃO DE CORES ---
 const COLORS = {
-    primary: '#1D4ED8', // Azul forte (moderno)
-    primaryLight: '#DCE7FF', // Azul claro para fundo
-    background: '#F8F8F8', // Fundo cinza claro
+    primary: '#1D4ED8',
+    primaryLight: '#DCE7FF',
+    background: '#F8F8F8',
     card: '#FFFFFF',
     text: '#333333',
     label: '#6B7280',
@@ -38,19 +37,15 @@ const COLORS = {
     inputBorder: '#E5E7EB',
 };
 
-// --- TIPAGEM ---
 interface BairroData {
     bairro: string;
 }
 
-// --- FUNÇÕES DE UTILIDADE ---
 const formatCurrencyInput = (value: string) => {
-    // Remove tudo que não for dígito
     let cleanValue = value.replace(/[^\d]/g, '');
 
     if (!cleanValue) return '';
 
-    // Converte para número e depois para formato de moeda
     let num = parseInt(cleanValue, 10) / 100;
     
     return num.toLocaleString('pt-BR', {
@@ -62,7 +57,6 @@ const formatCurrencyInput = (value: string) => {
 const extractNumericValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
     
-    // Remove R$, pontos de milhar e substitui a vírgula decimal por ponto
     const cleanValue = formattedValue
         .replace(/[R$\s.]/g, '')
         .replace(',', '.');
@@ -72,7 +66,7 @@ const extractNumericValue = (formattedValue: string): number => {
 
 
 /* -------------------------------------------------------------------------- */
-/* COMPONENTES DO FORMULÁRIO                                                  */
+/* COMPONENTES DO FORMULÁRIO                                                  */
 /* -------------------------------------------------------------------------- */
 
 interface InputFieldProps {
@@ -107,13 +101,10 @@ interface BairroSelectorProps {
     onSelectBairro: (bairro: string) => void;
 }
 
-// COMPONENTE DO SELETOR DE BAIRRO COM FILTRO E ROLAGEM
 const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro, onSelectBairro }) => {
     const [modalVisible, setModalVisible] = useState(false);
-    // Novo estado para o termo de pesquisa
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Filtra a lista de bairros com base no termo de pesquisa
     const filteredBairros = useMemo(() => {
         if (!searchTerm) {
             return bairros;
@@ -127,12 +118,12 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
     const handleSelect = (bairro: string) => {
         onSelectBairro(bairro);
         setModalVisible(false);
-        setSearchTerm(''); // Limpa o termo de busca ao selecionar
+        setSearchTerm('');
     };
 
     const handleOpenModal = () => {
         setModalVisible(true);
-        setSearchTerm(''); // Inicia a busca vazia
+        setSearchTerm('');
     };
 
     return (
@@ -142,7 +133,6 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                 <Text style={styles.inputLabel}>Bairro do Imóvel</Text>
             </View>
             
-            {/* BOTÃO QUE ABRE O MODAL - Exibe o bairro selecionado */}
             <TouchableOpacity 
                 style={styles.selectButton} 
                 onPress={handleOpenModal}
@@ -154,14 +144,12 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                 <ChevronDown size={20} color={COLORS.primary} />
             </TouchableOpacity>
 
-            {/* MODAL COM PESQUISA E LISTA ROLÁVEL */}
             <Modal
                 animationType="slide"
                 transparent={true}
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
             >
-                {/* KeyboardAvoidingView para ajustar o modal quando o teclado aparece */}
                 <KeyboardAvoidingView
                     style={styles.modalOverlay}
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -174,7 +162,6 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                             </TouchableOpacity>
                         </View>
                         
-                        {/* CAMPO DE PESQUISA DENTRO DO MODAL */}
                         <View style={styles.searchContainer}>
                             <Search size={20} color={COLORS.label} style={styles.searchIcon} />
                             <TextInput
@@ -186,7 +173,6 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                             />
                         </View>
                         
-                        {/* LISTA ROLÁVEL COM BAIRROS FILTRADOS */}
                         <ScrollView style={styles.bairroListContainer}>
                             {filteredBairros.length > 0 ? (
                                 filteredBairros.map((item) => (
@@ -206,7 +192,6 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                             )}
                         </ScrollView>
 
-                        {/* Botão de Fechar para telas menores */}
                         <TouchableOpacity style={styles.modalCloseButton} onPress={() => setModalVisible(false)}>
                             <Text style={styles.modalCloseButtonText}>Fechar</Text>
                         </TouchableOpacity>
@@ -219,33 +204,27 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
 
 
 /* -------------------------------------------------------------------------- */
-/* TELA PRINCIPAL (INDEX)                                                     */
+/* TELA PRINCIPAL (INDEX)                                                     */
 /* -------------------------------------------------------------------------- */
 
 const HomeScreen = () => {
     const router = useRouter();
     
-    // CAMPOS VAZIOS POR PADRÃO (Conforme solicitação)
     const [valorInput, setValorInput] = useState('');
     const [metrosQuadrados, setMetrosQuadrados] = useState('');
     const [bairro, setBairro] = useState('');
     
-    // Lista de Bairros
     const bairrosList = useMemo(() => {
-        // Ordena a lista de bairros
         return (BAIRROS_DATA as BairroData[])
             .map(item => ({ bairro: item.bairro }))
             .sort((a, b) => a.bairro.localeCompare(b.bairro));
     }, []);
 
-    // Tratamento de mudança de valor (moeda)
     const handleValorChange = (text: string) => {
         setValorInput(formatCurrencyInput(text));
     };
     
-    // Validação e Navegação
     const handleAnalisar = () => {
-        // Extrai o valor numérico do input formatado
         const valorNumerico = extractNumericValue(valorInput);
         const m2Numerico = parseInt(metrosQuadrados, 10);
 
@@ -264,7 +243,6 @@ const HomeScreen = () => {
         });
     };
 
-    // Função para checar se o botão deve estar ativo
     const isButtonEnabled = useMemo(() => {
         const valorNumerico = extractNumericValue(valorInput);
         const m2Numerico = parseInt(metrosQuadrados, 10);
@@ -277,11 +255,8 @@ const HomeScreen = () => {
             <Stack.Screen options={{ headerShown: false }} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 
-                {/* --- HEADER CENTRALIZADO (ESTILIZADO) --- */}
                 <View style={styles.headerContainer}>
-                    {/* Componente Image */}
                     <Image 
-                        // URL de placeholder (Atualizada para 300x80)
                         source={{ 
                             uri: 'https://i.imgur.com/oNizFxc.png' 
                         }}
@@ -294,10 +269,8 @@ const HomeScreen = () => {
                     </Text>
                 </View>
 
-                {/* --- CARD PRINCIPAL DO FORMULÁRIO --- */}
                 <View style={styles.card}>
                     
-                    {/* Input: Valor do Imóvel */}
                     <InputField
                         label="Valor do Imóvel"
                         icon={DollarSign}
@@ -307,7 +280,6 @@ const HomeScreen = () => {
                         placeholder="Ex: R$ 450.000,00"
                     />
                     
-                    {/* Input: Metragem Quadrada */}
                     <InputField
                         label="Metragem Quadrada (m²)"
                         icon={Home}
@@ -317,14 +289,12 @@ const HomeScreen = () => {
                         placeholder="Ex: 85"
                     />
 
-                    {/* Selector: Bairro do Imóvel (COM PESQUISA E SCROLL) */}
                     <BairroSelector
                         bairros={bairrosList}
                         selectedBairro={bairro}
                         onSelectBairro={setBairro}
                     />
 
-                    {/* Botão de Análise */}
                     <TouchableOpacity 
                         style={[styles.analisarButton, !isButtonEnabled && styles.analisarButtonDisabled]} 
                         onPress={handleAnalisar}
@@ -342,27 +312,25 @@ const HomeScreen = () => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* ESTILOS REACT NATIVE                                                       */
+/* ESTILOS REACT NATIVE                                                       */
 /* -------------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: COLORS.background },
     scrollContent: { padding: 25 },
     
-    // Header Centralizado
     headerContainer: {
         alignItems: 'center',
         marginBottom: 30,
         paddingHorizontal: 15,
     },
-    // Estilo para a imagem (Logo) - TAMANHO AUMENTADO AQUI
     headerLogo: {
-        width: 400, // Largura aumentada (antes era 250)
-        height: 100, // Altura aumentada (antes era 60)
+        width: 400,
+        height: 100,
         resizeMode: 'contain',
         marginBottom: 15, 
     },
-    headerTitle: { // Mantido mas não usado, se quiser remover, pode.
+    headerTitle: {
         fontSize: 28,
         fontWeight: 'bold',
         color: COLORS.title,
@@ -376,7 +344,6 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
 
-    // Card Principal (Estilizado)
     card: {
         backgroundColor: COLORS.card,
         borderRadius: 16,
@@ -390,7 +357,6 @@ const styles = StyleSheet.create({
         borderColor: '#F3F4F6',
     },
 
-    // Input Group
     inputGroup: {
         marginBottom: 25,
     },
@@ -418,7 +384,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     
-    // Selector (Bairro)
     selectButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -434,10 +399,9 @@ const styles = StyleSheet.create({
     selectButtonText: {
         fontSize: 17,
         fontWeight: '500',
-        flex: 1, // Para ocupar o espaço e empurrar o ícone
+        flex: 1,
     },
 
-    // Botão Analisar (Estilizado)
     analisarButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -463,7 +427,6 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
     
-    // --- Estilos do Modal (Bairro Selector com Busca) ---
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
