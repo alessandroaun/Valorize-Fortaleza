@@ -12,6 +12,7 @@ import {
 
 import { useRouter } from 'expo-router';
 // Importação de ícones (adapte conforme sua biblioteca, ex: FontAwesome, MaterialCommunityIcons)
+import { FontAwesome } from '@expo/vector-icons';
 import { MapPin, DollarSign, Home } from 'lucide-react-native'; // Se preferir lucide
 
 // Importa os dados dos bairros
