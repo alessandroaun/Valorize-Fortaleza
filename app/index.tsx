@@ -21,7 +21,7 @@ import {
 import { DollarSign, Home, MapPin, TrendingUp, ChevronDown, Check, Search, X } from 'lucide-react-native';
 
 // Importa os dados dos bairros
-import BAIRROS_DATA from '../../data/bairros.json';
+import BAIRROS_DATA from '../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     headerContainer: {
         alignItems: 'center',
         marginBottom: 30,
-        marginTop: 20,
+        marginTop: 40,
     },
     logoContainer: {
         // Caso precise de um fundo para o logo, descomente abaixo:

@@ -19,7 +19,10 @@ import {
     Bus, Bike, Wifi, GraduationCap, HeartPulse, BookOpen, Trees, Activity 
 } from 'lucide-react-native';
 
+// --- IMPORTS DE DADOS E COMPONENTES ---
 import BAIRROS_DATA from '../data/bairros.json';
+import COORDENADAS_DATA from '../data/coordenadas_bairros.json'; // Novo Import
+import BairroMapa from '../components/BairroMapa'; // Novo Import
 
 const { width } = Dimensions.get('window');
 
@@ -76,6 +79,13 @@ interface BairroFullData {
     escolas_estaduais: string;
     unidades_religiosas: string;
     historia: string;
+}
+
+// Nova Interface para Coordenadas
+interface CoordenadasData {
+    bairro: string;
+    latitude: number;
+    longitude: number;
 }
 
 interface SearchParams {
@@ -220,7 +230,6 @@ interface InputDisplayCardProps {
 
 const InputDisplayCard: React.FC<InputDisplayCardProps> = ({ totalValue, area }) => (
     <View style={styles.inputDisplayCardContainer}>
-        {/* Aplica o novo estilo de alinhamento à esquerda aqui */}
         <View style={styles.inputDisplayItemLeft}>
             <View style={styles.inputDisplayHeader}>
                 <DollarSign size={24} color={COLORS.primary} />
@@ -232,7 +241,6 @@ const InputDisplayCard: React.FC<InputDisplayCardProps> = ({ totalValue, area })
                     VALOR TOTAL
                 </Text>
             </View>
-            {/* NOVO: Propriedades para garantir que o valor não quebre linha */}
             <Text 
                 style={styles.inputDisplayValueTotal}
                 numberOfLines={1} 
@@ -244,7 +252,6 @@ const InputDisplayCard: React.FC<InputDisplayCardProps> = ({ totalValue, area })
 
         <View style={styles.inputDisplaySeparator} />
 
-        {/* Usa o estilo original/centralizado (inputDisplayItem) aqui */}
         <View style={styles.inputDisplayItem}>
             <View style={styles.inputDisplayHeader}>
                 <Home size={24} color={COLORS.primary} />
@@ -256,7 +263,6 @@ const InputDisplayCard: React.FC<InputDisplayCardProps> = ({ totalValue, area })
                     ÁREA TOTAL (M²)
                 </Text>
             </View>
-            {/* NOVO: Propriedades para garantir que o valor não quebre linha */}
             <Text 
                 style={styles.inputDisplayValue}
                 numberOfLines={1} 
@@ -276,6 +282,7 @@ const ResultadoScreen = () => {
 
     const { bairro, valor, metrosQuadrados } = params;
 
+    // 1. Lógica de Dados do Bairro e Cálculos
     const analiseData = useMemo(() => {
         if (!bairro || !valor || !metrosQuadrados) return null;
 
@@ -299,14 +306,14 @@ const ResultadoScreen = () => {
             userPricePerM2,
         };
 
-        // 1. Cálculo Mobilidade
+        // Cálculo Mobilidade
         const mobilityStatus = calculateMobilityStatus(
             bairroData.pontos_de_onibus, 
             bairroData.estacoes_bicicletar, 
             bairroData.ciclovias_km
         );
 
-        // 2. Cálculo Educação e Saúde
+        // Cálculo Educação e Saúde
         const nEscolasMun = parseInt(bairroData.escolas_municipais || '0', 10);
         const nEscolasEst = parseInt(bairroData.escolas_estaduais || '0', 10);
         const totalEscolas = nEscolasMun + nEscolasEst;
@@ -338,6 +345,11 @@ const ResultadoScreen = () => {
             eduHealthStatus 
         };
     }, [bairro, valor, metrosQuadrados]);
+
+    // 2. Nova Lógica para Encontrar Coordenadas
+    const coordenadasBairro = useMemo<CoordenadasData | undefined>(() => {
+        return COORDENADAS_DATA.find(item => item.bairro === bairro) as CoordenadasData | undefined;
+    }, [bairro]);
 
 
     if (!analiseData) {
@@ -486,7 +498,7 @@ const ResultadoScreen = () => {
                 <Text style={styles.sectionTitle}>Educação e Saúde</Text>
                 <View style={styles.gridContainer}>
                     {/* Linha 1: Escolas Públicas e Equip. Saúde */}
-                     <View style={styles.rowContainer}>
+                      <View style={styles.rowContainer}>
                         <InfoCard
                             icon={GraduationCap}
                             title="ESCOLAS PÚBLICAS"
@@ -522,7 +534,7 @@ const ResultadoScreen = () => {
                 {/* SEÇÃO 4: LAZER */}
                 <Text style={styles.sectionTitle}>Lazer e Conectividade</Text>
                 <View style={styles.gridContainer}>
-                     <View style={styles.rowContainer}>
+                      <View style={styles.rowContainer}>
                         <InfoCard
                             icon={Trees}
                             title="PRAÇAS"
@@ -599,6 +611,18 @@ const ResultadoScreen = () => {
                     </>
                 )}
 
+                {/* --- NOVO: MAPA DO BAIRRO (MOVIDO PARA CÁ) --- */}
+                {coordenadasBairro && (
+                    <View style={styles.mapContainer}>
+                         <Text style={styles.sectionTitle}>Localização</Text>
+                         <BairroMapa 
+                             bairro={data.bairro}
+                             latitude={coordenadasBairro.latitude}
+                             longitude={coordenadasBairro.longitude}
+                         />
+                    </View>
+                )}
+
                 <View style={styles.tipBox}>
                     <View style={styles.tipHeader}>
                         <Zap size={20} color={COLORS.infoBoxText} />
@@ -665,6 +689,11 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
         fontSize: 12,
         fontWeight: '700',
+    },
+
+    // ESTILO DO CONTAINER DO MAPA
+    mapContainer: {
+        marginBottom: 25,
     },
 
     // BOX DE RESULTADO

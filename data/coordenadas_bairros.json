@@ -1,0 +1,317 @@
+[
+  {
+    "bairro": "Aerolândia",
+    "latitude": -3.78456,
+    "longitude": -38.52891
+  },
+  {
+    "bairro": "Aeroporto",
+    "latitude": -3.77452,
+    "longitude": -38.5412
+  },
+  {
+    "bairro": "Alagadiço",
+    "latitude": -3.73801,
+    "longitude": -38.54101
+  },
+  {
+    "bairro": "Aldeota",
+    "latitude": -3.74312,
+    "longitude": -38.49501
+  },
+  {
+    "bairro": "Alto da Balança",
+    "latitude": -3.79123,
+    "longitude": -38.52109
+  },
+  {
+    "bairro": "Alto da Salinas",
+    "latitude": -3.79501,
+    "longitude": -38.54901
+  },
+  {
+    "bairro": "Amadeu Furtado",
+    "latitude": -3.74872,
+    "longitude": -38.57121
+  },
+  {
+    "bairro": "Ancuri",
+    "latitude": -3.83415,
+    "longitude": -38.5123
+  },
+  {
+    "bairro": "Antônio Bezerra",
+    "latitude": -3.75121,
+    "longitude": -38.60155
+  },
+  {
+    "bairro": "Aracapé",
+    "latitude": -3.80101,
+    "longitude": -38.57211
+  },
+  {
+    "bairro": "Autran Nunes",
+    "latitude": -3.76101,
+    "longitude": -38.61109
+  },
+  {
+    "bairro": "Álvaro Weyne",
+    "latitude": -3.73501,
+    "longitude": -38.57101
+  },
+  {
+    "bairro": "Barra do Ceará",
+    "latitude": -3.71501,
+    "longitude": -38.60501
+  },
+  {
+    "bairro": "Barroso",
+    "latitude": -3.81501,
+    "longitude": -38.50501
+  },
+  {
+    "bairro": "Bela Vista",
+    "latitude": -3.76501,
+    "longitude": -38.56101
+  },
+  {
+    "bairro": "Benfica",
+    "latitude": -3.74619,
+    "longitude": -38.54228
+  },
+  {
+    "bairro": "Bom Jardim",
+    "latitude": -3.81101,
+    "longitude": -38.58101
+  },
+  {
+    "bairro": "Bom Futuro",
+    "latitude": -3.76101,
+    "longitude": -38.54101
+  },
+  {
+    "bairro": "Cais do Porto",
+    "latitude": -3.73101,
+    "longitude": -38.50101
+  },
+  {
+    "bairro": "Cambeba",
+    "latitude": -3.79501,
+    "longitude": -38.48101
+  },
+  {
+    "bairro": "Canindezinho",
+    "latitude": -3.81101,
+    "longitude": -38.59101
+  },
+  {
+    "bairro": "Carlito Pamplona",
+    "latitude": -3.73101,
+    "longitude": -38.58101
+  },
+  {
+    "bairro": "Couto Fernandes",
+    "latitude": -3.75801,
+    "longitude": -38.56101
+  },
+  {
+    "bairro": "Curió",
+    "latitude": -3.81501,
+    "longitude": -38.46101
+  },
+  {
+    "bairro": "Dendê",
+    "latitude": -3.78101,
+    "longitude": -38.50101
+  },
+  {
+    "bairro": "Dias Macedo",
+    "latitude": -3.78101,
+    "longitude": -38.49101
+  },
+  {
+    "bairro": "Dionísio Torres",
+    "latitude": -3.75801,
+    "longitude": -38.49101
+  },
+  {
+    "bairro": "Edson Queiroz",
+    "latitude": -3.77101,
+    "longitude": -38.47101
+  },
+  {
+    "bairro": "Engenheiro Luciano Cavalcante",
+    "latitude": -3.77801,
+    "longitude": -38.48101
+  },
+  {
+    "bairro": "Fátima",
+    "latitude": -3.74801,
+    "longitude": -38.53101
+  },
+  {
+    "bairro": "Floresta",
+    "latitude": -3.74101,
+    "longitude": -38.58101
+  },
+  {
+    "bairro": "Goiabeiras",
+    "latitude": -3.72101,
+    "longitude": -38.49101
+  },
+  {
+    "bairro": "Guajeru",
+    "latitude": -3.83101,
+    "longitude": -38.48101
+  },
+  {
+    "bairro": "Itaoca",
+    "latitude": -3.77101,
+    "longitude": -38.55101
+  },
+  {
+    "bairro": "Itaperi",
+    "latitude": -3.78101,
+    "longitude": -38.53101
+  },
+  {
+    "bairro": "Jacarecanga",
+    "latitude": -3.72501,
+    "longitude": -38.54101
+  },
+  {
+    "bairro": "Jangurussu",
+    "latitude": -3.83101,
+    "longitude": -38.52101
+  },
+  {
+    "bairro": "Jardim América",
+    "latitude": -3.76101,
+    "longitude": -38.53101
+  },
+  {
+    "bairro": "Jardim Cearense",
+    "latitude": -3.80101,
+    "longitude": -38.56101
+  },
+  {
+    "bairro": "Jardim Das Oliveiras",
+    "latitude": -3.79101,
+    "longitude": -38.51101
+  },
+  {
+    "bairro": "Jardim Guanabara",
+    "latitude": -3.72101,
+    "longitude": -38.60101
+  },
+  {
+    "bairro": "Jóquei Clube",
+    "latitude": -3.77801,
+    "longitude": -38.58101
+  },
+  {
+    "bairro": "Lagoa Redonda",
+    "latitude": -3.81101,
+    "longitude": -38.45101
+  },
+  {
+    "bairro": "Messejana",
+    "latitude": -3.82101,
+    "longitude": -38.48101
+  },
+  {
+    "bairro": "Montese",
+    "latitude": -3.76801,
+    "longitude": -38.54101
+  },
+  {
+    "bairro": "Mondubim",
+    "latitude": -3.81101,
+    "longitude": -38.55101
+  },
+  {
+    "bairro": "Mucuripe",
+    "latitude": -3.71101,
+    "longitude": -38.49101
+  },
+  {
+    "bairro": "Padre Andrade",
+    "latitude": -3.75801,
+    "longitude": -38.59101
+  },
+  {
+    "bairro": "Pan Americano",
+    "latitude": -3.76101,
+    "longitude": -38.55501
+  },
+  {
+    "bairro": "Papicu",
+    "latitude": -3.75101,
+    "longitude": -38.45501
+  },
+  {
+    "bairro": "Parangaba",
+    "latitude": -3.77101,
+    "longitude": -38.54101
+  },
+  {
+    "bairro": "Parquelândia",
+    "latitude": -3.74801,
+    "longitude": -38.56101
+  },
+  {
+    "bairro": "Parreão",
+    "latitude": -3.77101,
+    "longitude": -38.52501
+  },
+  {
+    "bairro": "Parque Araxá",
+    "latitude": -3.74801,
+    "longitude": -38.57101
+  },
+  {
+    "bairro": "Parque Dois Irmãos",
+    "latitude": -3.78101,
+    "longitude": -38.58101
+  },
+  {
+    "bairro": "Parque Iracema",
+    "latitude": -3.80801,
+    "longitude": -38.47501
+  },
+  {
+    "bairro": "Parque Manibura",
+    "latitude": -3.79101,
+    "longitude": -38.46101
+  },
+  {
+    "bairro": "Parque Presidente Vargas",
+    "latitude": -3.79101,
+    "longitude": -38.55101
+  },
+  {
+    "bairro": "Parque Santa Maria",
+    "latitude": -3.84101,
+    "longitude": -38.52101
+  },
+  {
+    "bairro": "Parque Santa Rosa",
+    "latitude": -3.81101,
+    "longitude": -38.59101
+  },
+  {
+    "bairro": "Parque São José",
+    "latitude": -3.77101,
+    "longitude": -38.59101
+  },
+  {
+    "bairro": "Passaré",
+    "latitude": -3.80101,
+    "longitude": -38.53101
+  },
+  {
+    "bairro": "Paupina",
+    "latitude": -3.84101,
+    "longitude": -38.49101
+  }
+]
