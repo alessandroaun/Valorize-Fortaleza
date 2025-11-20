@@ -1,5 +1,5 @@
 import { Stack, useRouter } from 'expo-router';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -13,60 +13,64 @@ import {
     Alert, 
     KeyboardAvoidingView,
     Platform,
-    Image
+    Image,
+    StatusBar
 } from 'react-native';
 
+// Ícones
 import { DollarSign, Home, MapPin, TrendingUp, ChevronDown, Check, Search, X } from 'lucide-react-native';
 
-//Alessandro: Necessário instalar o lucide-react-native via npm.// 
-
+// Importa os dados dos bairros
 import BAIRROS_DATA from '../../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
+// 🌑 --- PALETA DE CORES DARK / MODERN ---
 const COLORS = {
-    primary: '#1D4ED8',
-    primaryLight: '#DCE7FF',
-    background: '#F8F8F8',
-    card: '#FFFFFF',
-    text: '#333333',
-    label: '#6B7280',
-    title: '#1F2937',
+    // Fundo Geral (Dark Navy profundo)
+    background: '#0f1d2aff', 
+    
+    // Superfícies (Cards e Modais - um pouco mais claro que o fundo)
+    card: '#1E293B',
+    
+    // Inputs (Um tom diferente para destacar do card)
+    inputBackground: '#334155',
+    
+    // Cores de Destaque
+    primary: '#11ac5eff', // Azul Elétrico
+    accent: '#10B981',  // Verde Esmeralda
     danger: '#EF4444',
-    success: '#10B981',
-    inputBorder: '#E5E7EB',
+    
+    // Texto
+    text: '#1ff087ff',       // Branco quase puro
+    textSecondary: '#94A3B8', // Cinza azulado para legendas
+    
+    // Bordas e Detalhes
+    border: '#475569',
 };
 
+// --- TIPAGEM ---
 interface BairroData {
     bairro: string;
 }
 
+// --- FUNÇÕES DE UTILIDADE ---
 const formatCurrencyInput = (value: string) => {
     let cleanValue = value.replace(/[^\d]/g, '');
-
     if (!cleanValue) return '';
-
+    if (cleanValue.length > 10) cleanValue = cleanValue.substring(0, 10);
     let num = parseInt(cleanValue, 10) / 100;
-    
-    return num.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    });
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
 const extractNumericValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
-    
-    const cleanValue = formattedValue
-        .replace(/[R$\s.]/g, '')
-        .replace(',', '.');
-        
+    const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
     return parseFloat(cleanValue) || 0;
 };
 
-
 /* -------------------------------------------------------------------------- */
-/* COMPONENTES DO FORMULÁRIO                                                  */
+/* COMPONENTES DO FORMULÁRIO (DARK THEME)                                     */
 /* -------------------------------------------------------------------------- */
 
 interface InputFieldProps {
@@ -79,19 +83,21 @@ interface InputFieldProps {
 }
 
 const InputField: React.FC<InputFieldProps> = ({ label, icon: Icon, value, onChangeText, keyboardType = 'default', placeholder }) => (
-    <View style={styles.inputGroup}>
-        <View style={styles.inputLabelContainer}>
-            <Icon size={16} color={COLORS.label} />
-            <Text style={styles.inputLabel}>{label}</Text>
+    <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>{label}</Text>
+        <View style={styles.inputWrapper}>
+            <View style={styles.iconWrapper}>
+                <Icon size={20} color={COLORS.primary} />
+            </View>
+            <TextInput
+                style={styles.input}
+                value={value}
+                onChangeText={onChangeText}
+                keyboardType={keyboardType}
+                placeholder={placeholder}
+                placeholderTextColor={COLORS.textSecondary}
+            />
         </View>
-        <TextInput
-            style={styles.input}
-            value={value}
-            onChangeText={onChangeText}
-            keyboardType={keyboardType}
-            placeholder={placeholder}
-            placeholderTextColor="#C7C7C7"
-        />
     </View>
 );
 
@@ -106,46 +112,38 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredBairros = useMemo(() => {
-        if (!searchTerm) {
-            return bairros;
-        }
+        if (!searchTerm) return bairros;
         const lowerCaseSearch = searchTerm.toLowerCase();
-        return bairros.filter(item => 
-            item.bairro.toLowerCase().includes(lowerCaseSearch)
-        );
+        return bairros.filter(item => item.bairro.toLowerCase().includes(lowerCaseSearch));
     }, [searchTerm, bairros]);
 
     const handleSelect = (bairro: string) => {
         onSelectBairro(bairro);
         setModalVisible(false);
-        setSearchTerm('');
-    };
-
-    const handleOpenModal = () => {
-        setModalVisible(true);
-        setSearchTerm('');
+        setSearchTerm(''); 
     };
 
     return (
-        <View style={styles.inputGroup}>
-            <View style={styles.inputLabelContainer}>
-                <MapPin size={16} color={COLORS.label} />
-                <Text style={styles.inputLabel}>Bairro do Imóvel</Text>
-            </View>
+        <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Bairro do Imóvel</Text>
             
             <TouchableOpacity 
                 style={styles.selectButton} 
-                onPress={handleOpenModal}
+                onPress={() => setModalVisible(true)}
                 activeOpacity={0.8}
             >
-                <Text style={[styles.selectButtonText, selectedBairro ? { color: COLORS.text } : { color: '#C7C7C7' }]}>
-                    {selectedBairro || 'Selecione ou Busque o Bairro'}
+                <View style={styles.iconWrapper}>
+                    <MapPin size={20} color={COLORS.primary} />
+                </View>
+                <Text style={[styles.selectButtonText, selectedBairro ? { color: COLORS.text } : { color: COLORS.textSecondary }]}>
+                    {selectedBairro || 'Selecione o bairro...'}
                 </Text>
-                <ChevronDown size={20} color={COLORS.primary} />
+                <ChevronDown size={20} color={COLORS.textSecondary} />
             </TouchableOpacity>
 
+            {/* MODAL DARK */}
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
@@ -156,24 +154,25 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                 >
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Selecione o Bairro</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <X size={24} color={COLORS.label} />
+                            <Text style={styles.modalTitle}>Selecionar Bairro</Text>
+                            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeIconArea}>
+                                <X size={24} color={COLORS.textSecondary} />
                             </TouchableOpacity>
                         </View>
                         
                         <View style={styles.searchContainer}>
-                            <Search size={20} color={COLORS.label} style={styles.searchIcon} />
+                            <Search size={20} color={COLORS.textSecondary} style={{ marginRight: 10 }} />
                             <TextInput
                                 style={styles.searchInput}
-                                placeholder="Digite o nome do bairro para filtrar..."
-                                placeholderTextColor="#9CA3AF"
+                                placeholder="Buscar bairro..."
+                                placeholderTextColor={COLORS.textSecondary}
                                 value={searchTerm}
                                 onChangeText={setSearchTerm}
+                                autoFocus={false}
                             />
                         </View>
                         
-                        <ScrollView style={styles.bairroListContainer}>
+                        <ScrollView style={styles.bairroListContainer} indicatorStyle="white">
                             {filteredBairros.length > 0 ? (
                                 filteredBairros.map((item) => (
                                     <TouchableOpacity
@@ -183,18 +182,14 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                                     >
                                         <Text style={styles.bairroListItemText}>{item.bairro}</Text>
                                         {selectedBairro === item.bairro && (
-                                            <Check size={18} color={COLORS.success} />
+                                            <Check size={20} color={COLORS.accent} />
                                         )}
                                     </TouchableOpacity>
                                 ))
                             ) : (
-                                <Text style={styles.noResultsText}>Nenhum bairro encontrado para "{searchTerm}".</Text>
+                                <Text style={styles.noResultsText}>Nenhum bairro encontrado.</Text>
                             )}
                         </ScrollView>
-
-                        <TouchableOpacity style={styles.modalCloseButton} onPress={() => setModalVisible(false)}>
-                            <Text style={styles.modalCloseButtonText}>Fechar</Text>
-                        </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
@@ -202,9 +197,8 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
     );
 };
 
-
 /* -------------------------------------------------------------------------- */
-/* TELA PRINCIPAL (INDEX)                                                     */
+/* TELA PRINCIPAL (INDEX)                                                     */
 /* -------------------------------------------------------------------------- */
 
 const HomeScreen = () => {
@@ -220,16 +214,14 @@ const HomeScreen = () => {
             .sort((a, b) => a.bairro.localeCompare(b.bairro));
     }, []);
 
-    const handleValorChange = (text: string) => {
-        setValorInput(formatCurrencyInput(text));
-    };
+    const handleValorChange = (text: string) => setValorInput(formatCurrencyInput(text));
     
     const handleAnalisar = () => {
         const valorNumerico = extractNumericValue(valorInput);
         const m2Numerico = parseInt(metrosQuadrados, 10);
 
         if (valorNumerico <= 0 || isNaN(m2Numerico) || m2Numerico <= 0 || !bairro) {
-             Alert.alert("Erro de Validação", "Por favor, preencha todos os campos corretamente (Valor e Metragem devem ser maiores que zero e o Bairro deve ser selecionado).");
+             Alert.alert("Atenção", "Preencha todos os campos para realizar a análise.");
              return;
         }
 
@@ -246,47 +238,52 @@ const HomeScreen = () => {
     const isButtonEnabled = useMemo(() => {
         const valorNumerico = extractNumericValue(valorInput);
         const m2Numerico = parseInt(metrosQuadrados, 10);
-
         return valorNumerico > 0 && !isNaN(m2Numerico) && m2Numerico > 0 && !!bairro;
     }, [valorInput, metrosQuadrados, bairro]);
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            {/* StatusBar claro para fundo escuro */}
+            <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
             <Stack.Screen options={{ headerShown: false }} />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
+                {/* HEADER */}
                 <View style={styles.headerContainer}>
-                    <Image 
-                        source={{ 
-                            uri: 'https://i.imgur.com/oNizFxc.png' 
-                        }}
-                        style={styles.headerLogo}
-                    />
+                    {/* Nota: Se o logo for preto, considere usar um logo branco ou um container claro. 
+                        Como o fundo é escuro, adicionei um container sutil se necessário, 
+                        mas aqui mantive transparente assumindo que o logo funciona ou será ajustado. */}
+                    <View style={styles.logoContainer}>
+                         <Image 
+                            source={{ uri: 'https://i.imgur.com/oNizFxc.png' }}
+                            style={styles.headerLogo}
+                        />
+                    </View>
+            
                     <Text style={styles.headerSubtitle}>
-                        Preencha os dados do imóvel que você deseja comprar em Fortaleza.
-
-
+                       Insira os dados e descubra se a compra vale a pena. Receba informações precisas sobre o imóvel e o bairro, na palma da sua mão.
                     </Text>
                 </View>
 
+                {/* CARD PRINCIPAL */}
                 <View style={styles.card}>
-                    
                     <InputField
                         label="Valor do Imóvel"
                         icon={DollarSign}
                         value={valorInput}
                         onChangeText={handleValorChange}
                         keyboardType="numeric"
-                        placeholder="Ex: R$ 450.000,00"
+                        placeholder="Ex:. R$ 250.000,00"
                     />
                     
                     <InputField
-                        label="Metragem Quadrada (m²)"
+                        label="Metragem Quadrada do Imóvel"
                         icon={Home}
                         value={metrosQuadrados}
                         onChangeText={setMetrosQuadrados}
                         keyboardType="numeric"
-                        placeholder="Ex: 85"
+                        placeholder="Ex:. 130 m²"
                     />
 
                     <BairroSelector
@@ -298,13 +295,16 @@ const HomeScreen = () => {
                     <TouchableOpacity 
                         style={[styles.analisarButton, !isButtonEnabled && styles.analisarButtonDisabled]} 
                         onPress={handleAnalisar}
-                        activeOpacity={isButtonEnabled ? 0.8 : 1}
+                        activeOpacity={0.8}
                         disabled={!isButtonEnabled}
                     >
-                        <TrendingUp size={20} color="#fff" />
-                        <Text style={styles.analisarButtonText}>Analisar Imóvel</Text>
+                        <TrendingUp size={22} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.analisarButtonText}>ANALISAR AGORA</Text>
                     </TouchableOpacity>
                 </View>
+
+                <Text style={styles.footerText}>Baseado em dados reais do mercado fortalezense.</Text>
+                <Text style={styles.footerText2}>Desenvolvido por alunos da Estácio Parangaba orientados pela professora Juciarias Medeiros. Novembro de 2025.</Text>
 
             </ScrollView>
         </SafeAreaView>
@@ -312,175 +312,221 @@ const HomeScreen = () => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* ESTILOS REACT NATIVE                                                       */
+/* ESTILOS (DARK MODE)                                                        */
 /* -------------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: COLORS.background },
-    scrollContent: { padding: 25 },
+    safeArea: { 
+        flex: 1, 
+        backgroundColor: COLORS.background 
+    },
+    scrollContent: { 
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+        paddingTop: 20,
+    },
     
+    // HEADER
     headerContainer: {
         alignItems: 'center',
         marginBottom: 30,
-        paddingHorizontal: 15,
+        marginTop: 20,
+    },
+    logoContainer: {
+        // Caso precise de um fundo para o logo, descomente abaixo:
+        // backgroundColor: 'rgba(255,255,255,0.1)',
+        // borderRadius: 16,
+        // padding: 10,
+        marginBottom: 5,
     },
     headerLogo: {
-        width: 400,
-        height: 100,
+        width: 250,
+        height: 125,
         resizeMode: 'contain',
-        marginBottom: 15, 
+        // Se o logo for preto, use tintColor branco, senão remova a linha abaixo
+        // tintColor: '#FFF' 
     },
     headerTitle: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
-        color: COLORS.title,
+        color: COLORS.text,
         marginBottom: 8,
         textAlign: 'center',
     },
     headerSubtitle: {
-        fontSize: 15,
-        color: COLORS.label,
+        fontSize: 14,
+        color: COLORS.textSecondary,
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 18,
+        maxWidth: '95%',
     },
 
+    // CARD FORMULÁRIO
     card: {
         backgroundColor: COLORS.card,
-        borderRadius: 16,
+        borderRadius: 24,
         padding: 24,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 15,
-        elevation: 8,
+        // Sombras sutis para dar profundidade no dark mode
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: COLORS.border,
     },
 
-    inputGroup: {
-        marginBottom: 25,
-    },
-    inputLabelContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 6,
+    // INPUTS
+    inputContainer: {
+        marginBottom: 20,
     },
     inputLabel: {
-        fontSize: 16,
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        marginBottom: 8,
         fontWeight: '600',
-        color: COLORS.text,
-        marginLeft: 8,
+        marginLeft: 4,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.inputBackground,
+        borderRadius: 16,
+        height: 56,
+        borderWidth: 1,
+        borderColor: 'transparent', // Pode mudar para COLORS.primary ao focar se quiser
+    },
+    iconWrapper: {
+        width: 50,
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRightWidth: 1,
+        borderRightColor: 'rgba(255,255,255,0.05)',
     },
     input: {
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder,
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        paddingVertical: 14,
-        fontSize: 18,
-        fontWeight: '500',
+        flex: 1,
+        height: '100%',
         color: COLORS.text,
-        marginTop: 5,
-        backgroundColor: '#fff',
+        fontSize: 16,
+        fontWeight: '500',
+        paddingHorizontal: 16,
     },
-    
+
+    // SELECTOR
     selectButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder,
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        paddingVertical: 14,
-        marginTop: 5,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.inputBackground,
+        borderRadius: 16,
+        height: 56,
+        paddingRight: 16,
     },
     selectButtonText: {
-        fontSize: 17,
-        fontWeight: '500',
         flex: 1,
+        fontSize: 16,
+        fontWeight: '500',
+        paddingHorizontal: 16,
     },
 
+    // BOTÃO
     analisarButton: {
         flexDirection: 'row',
+        backgroundColor: COLORS.primary,
+        height: 60,
+        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: COLORS.primary,
-        borderRadius: 12,
-        paddingVertical: 16,
         marginTop: 10,
         shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
         shadowRadius: 10,
         elevation: 8,
     },
     analisarButtonDisabled: {
-        backgroundColor: '#9CA3AF',
-        shadowColor: 'transparent',
+        backgroundColor: COLORS.inputBackground,
+        shadowOpacity: 0,
     },
     analisarButtonText: {
-        color: '#fff',
-        fontSize: 18,
+        color: '#FFFFFF',
+        fontSize: 16,
         fontWeight: 'bold',
-        marginLeft: 10,
+        letterSpacing: 1,
     },
-    
+
+    // FOOTER
+    footerText: {
+        textAlign: 'center',
+        color: COLORS.textSecondary,
+        marginTop: 20,
+        fontSize: 13,
+        opacity: 0.6,
+    },
+    footerText2: {
+        textAlign: 'center',
+        color: COLORS.textSecondary,
+        marginTop: 2,
+        fontSize: 10,
+        opacity: 0.6,
+    },
+
+    // MODAL
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Fundo mais escuro
     },
     modalContent: {
         backgroundColor: COLORS.card,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 20,
-        maxHeight: Dimensions.get('window').height * 0.8,
-        width: '100%',
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        padding: 24,
+        height: '80%', // Ocupa 80% da tela
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -5 },
+        shadowOpacity: 0.5,
+        shadowRadius: 20,
+        elevation: 20,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 15,
+        marginBottom: 20,
     },
     modalTitle: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.title,
+        color: COLORS.text,
+    },
+    closeIconArea: {
+        padding: 5,
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder,
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        backgroundColor: COLORS.background,
-    },
-    searchIcon: {
-        marginRight: 10,
+        backgroundColor: COLORS.inputBackground,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        height: 50,
+        marginBottom: 20,
     },
     searchInput: {
         flex: 1,
-        paddingVertical: 12,
-        fontSize: 16,
         color: COLORS.text,
+        fontSize: 16,
+        height: '100%',
     },
     bairroListContainer: {
-        maxHeight: Dimensions.get('window').height * 0.5, 
-        borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
-        paddingTop: 5,
+        flex: 1,
     },
     bairroListItem: {
-        paddingVertical: 12,
-        paddingHorizontal: 5,
+        paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        borderBottomColor: 'rgba(255,255,255,0.05)',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -488,25 +534,12 @@ const styles = StyleSheet.create({
     bairroListItemText: {
         fontSize: 16,
         color: COLORS.text,
-        flex: 1,
     },
     noResultsText: {
-        padding: 15,
         textAlign: 'center',
-        color: COLORS.label,
-        fontStyle: 'italic',
-    },
-    modalCloseButton: {
-        backgroundColor: COLORS.primaryLight,
-        borderRadius: 10,
-        paddingVertical: 14,
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    modalCloseButtonText: {
+        color: COLORS.textSecondary,
+        marginTop: 40,
         fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.primary,
     },
 });
 
