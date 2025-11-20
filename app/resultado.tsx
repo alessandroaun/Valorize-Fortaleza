@@ -10,7 +10,8 @@ import {
     TouchableOpacity,
     StyleProp, 
     TextStyle, 
-    ViewStyle
+    ViewStyle,
+    StatusBar
 } from 'react-native';
 
 import { ChevronLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search } from 'lucide-react-native';
@@ -19,24 +20,33 @@ import BAIRROS_DATA from '../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
+// 🌑 --- PALETA DE CORES DARK (Consistente com index.tsx) ---
 const COLORS = {
-    primary: '#6C5CE7',
-    background: '#F8F8F8',
-    card: '#FFFFFF',
-    text: '#333333',
-    label: '#6B7280',
-    title: '#1F2937',
-    greenSuccess: '#10B981',
-    greenLight: '#34D399',
-    yellowWarning: '#FBBF24',
-    orangeAlert: '#FB923C',
-    redDanger: '#EF4444',
+    background: '#0f1d2aff', 
+    card: '#1E293B',
+    cardSecondary: '#334155', // Usado para cards menores dentro do principal
+    
+    primary: '#11ac5eff',
+    accent: '#10B981',
+    
+    text: '#1ff087ff', // Verde claro vibrante para destaques de texto
+    textPrimary: '#F8FAFC', // Branco para textos principais
+    textSecondary: '#94A3B8', // Cinza para legendas
+    
+    // Cores de Status (Adaptadas para Dark Mode)
+    greenSuccess: '#059669', // Verde mais escuro para fundo
+    greenLight: '#10B981',   // Verde vibrante
+    yellowWarning: '#D97706', // Laranja/Amarelo escuro
+    orangeAlert: '#EA580C',
+    redDanger: '#DC2626',
+    
     indigoCard: '#4F46E5',
     tealCard: '#0D9488',
-    grayCard: '#4B5563',
-    infoBoxBg: '#E0F2FE',
-    infoBoxBorder: '#93C5FD',
-    infoBoxText: '#1D4ED8',
+    grayCard: '#475569',
+    
+    infoBoxBg: 'rgba(59, 130, 246, 0.1)', // Azul transparente
+    infoBoxBorder: 'rgba(59, 130, 246, 0.3)',
+    infoBoxText: '#60A5FA', // Azul claro
 };
 
 interface BairroFullData {
@@ -61,9 +71,10 @@ interface SearchParams {
 const formatCurrency = (value: number) =>
     (isNaN(value) ? 0 : value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
+// Funções de Classificação (Cores ajustadas para texto ou badge)
 const classifyIbeu = (value: string) => {
     const num = parseFloat(value || '0');
-    if (num >= 0.9) return { label: 'Muito Alto', color: COLORS.greenSuccess };
+    if (num >= 0.9) return { label: 'Muito Alto', color: COLORS.greenLight };
     if (num >= 0.8) return { label: 'Alto', color: COLORS.greenLight };
     if (num >= 0.7) return { label: 'Médio', color: COLORS.yellowWarning };
     if (num >= 0.6) return { label: 'Baixo', color: COLORS.orangeAlert };
@@ -72,23 +83,24 @@ const classifyIbeu = (value: string) => {
 
 const classifyIndicator = (value: string) => {
     const num = parseFloat(value || '0');
-    if (num >= 0.9) return { label: 'Excelente', color: COLORS.greenSuccess };
+    if (num >= 0.9) return { label: 'Excelente', color: COLORS.greenLight };
     if (num >= 0.8) return { label: 'Bom', color: COLORS.greenLight };
     if (num >= 0.7) return { label: 'Regular', color: COLORS.yellowWarning };
     return { label: 'Ruim', color: COLORS.redDanger };
 };
 
+// Estilos de cor para backgrounds (Badges e Cards)
 const getRNColorStyle = (colorName: string) => {
     switch (colorName) {
-        case 'bg-green-600': return { backgroundColor: COLORS.greenSuccess };
-        case 'bg-lime-500': return { backgroundColor: COLORS.greenLight };
-        case 'bg-yellow-500': return { backgroundColor: COLORS.yellowWarning };
-        case 'bg-orange-500': return { backgroundColor: COLORS.orangeAlert };
-        case 'bg-red-600': return { backgroundColor: COLORS.redDanger };
-        case 'bg-indigo-600': return { backgroundColor: COLORS.indigoCard };
-        case 'bg-teal-600': return { backgroundColor: COLORS.tealCard };
-        case 'bg-gray-700': return { backgroundColor: COLORS.grayCard };
-        default: return { backgroundColor: COLORS.label };
+        case 'bg-green-600': return { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: COLORS.greenLight, borderWidth: 1 };
+        case 'bg-lime-500': return { backgroundColor: 'rgba(132, 204, 22, 0.2)', borderColor: '#A3E635', borderWidth: 1 };
+        case 'bg-yellow-500': return { backgroundColor: 'rgba(245, 158, 11, 0.2)', borderColor: '#FBBF24', borderWidth: 1 };
+        case 'bg-orange-500': return { backgroundColor: 'rgba(249, 115, 22, 0.2)', borderColor: '#FB923C', borderWidth: 1 };
+        case 'bg-red-600': return { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: '#F87171', borderWidth: 1 };
+        case 'bg-indigo-600': return { backgroundColor: COLORS.cardSecondary }; // Cards neutros
+        case 'bg-teal-600': return { backgroundColor: COLORS.cardSecondary };
+        case 'bg-gray-700': return { backgroundColor: COLORS.cardSecondary };
+        default: return { backgroundColor: COLORS.cardSecondary };
     }
 };
 
@@ -97,18 +109,22 @@ interface InfoCardProps {
     title: string;
     value: string;
     unit?: string;
-    color: string;
+    color: string; // Mantido para compatibilidade, mas a cor visual será controlada pelo estilo dark
     valueStyle?: StyleProp<TextStyle>;
     containerStyle?: StyleProp<ViewStyle>;
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, color, valueStyle, containerStyle }) => {
-    const colorStyle = getRNColorStyle(color);
-    
+    // No tema dark, usamos uma cor de card padrão e ícones coloridos para diferenciar
+    let iconColor = COLORS.text;
+    if (title.includes('FIPE')) iconColor = '#818CF8'; // Indigo claro
+    if (title.includes('OLX')) iconColor = '#2DD4BF'; // Teal claro
+    if (title.includes('TOTAL') || title.includes('METRAGEM')) iconColor = COLORS.textSecondary;
+
     return (
-        <View style={[styles.miniInfoCard, colorStyle, containerStyle]}>
+        <View style={[styles.miniInfoCard, containerStyle]}>
             <View style={styles.miniInfoCardHeader}>
-                <Icon size={16} color="#fff" />
+                <Icon size={16} color={iconColor} />
                 <Text style={styles.miniInfoCardTitle}>{title}</Text>
             </View>
             <Text 
@@ -133,8 +149,7 @@ interface IndicatorDisplayProps {
 const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, description, classifier }) => {
     const safeValue = String(value || '0');
     const { label, color } = classifier(safeValue);
-    const badgeColorStyle = getRNColorStyle(color === COLORS.greenSuccess ? 'bg-green-600' : (color === COLORS.greenLight ? 'bg-lime-500' : 'default'));
-
+    
     const displayValue = !isNaN(parseFloat(safeValue)) && parseFloat(safeValue) > 0 
         ? parseFloat(safeValue).toFixed(3) 
         : 'N/A';
@@ -144,8 +159,8 @@ const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, descr
             <Text style={styles.indicatorDisplayTitle}>{title}</Text>
             <View style={styles.indicatorDisplayRow}>
                 <Text style={styles.indicatorDisplayValue}>{displayValue}</Text>
-                <View style={[styles.indicatorDisplayBadge, badgeColorStyle]}>
-                    <Text style={styles.indicatorDisplayBadgeText}>{label}</Text>
+                <View style={[styles.indicatorDisplayBadge, { borderColor: color }]}>
+                    <Text style={[styles.indicatorDisplayBadgeText, { color: color }]}>{label}</Text>
                 </View>
             </View>
             <Text style={styles.indicatorDisplayDescription}>{description}</Text>
@@ -206,11 +221,10 @@ const ResultadoScreen = () => {
                 <Stack.Screen options={{ headerShown: false }} />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>
-                        Não foi possível carregar os dados de análise para o bairro "{bairro || 'N/A'}".
-                        Verifique se o bairro está cadastrado ou se há dados suficientes no arquivo de bairros.
+                        Dados indisponíveis para "{bairro}".
                     </Text>
                     <TouchableOpacity onPress={() => router.replace('/')} style={styles.retryButton}>
-                            <Text style={styles.retryButtonText}>Voltar para o Início</Text>
+                         <Text style={styles.retryButtonText}>Voltar</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -224,130 +238,137 @@ const ResultadoScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
             <Stack.Screen options={{ headerShown: false }} />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
-                <View style={styles.customHeader}>
+                {/* HEADER SIMPLES */}
+                <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <ChevronLeft size={24} color={COLORS.primary} />
-                        <Text style={styles.backButtonText}>Voltar</Text>
+                        <ChevronLeft size={28} color={COLORS.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle} numberOfLines={1}>Análise para {data.bairro}</Text>
-                    <View style={{width: 0}} />
+                    <Text style={styles.headerTitle}>Análise de Mercado</Text>
+                    <View style={{width: 28}} /> 
                 </View>
 
+                <Text style={styles.bairroTitle}>{data.bairro}</Text>
+
+                {/* BOX DE RESULTADO PRINCIPAL */}
                 <View style={[styles.recommendationBox, vantagemColorStyle]}>
-                    <View style={styles.recommendationBoxHeader}>
-                        <TrendingUp size={24} color="#fff" />
-                        <Text style={styles.recommendationBoxStatus}>{status}</Text>
+                    <View style={styles.recommendationHeader}>
+                        <TrendingUp size={24} color={COLORS.textPrimary} />
+                        <Text style={styles.recommendationStatus}>{status}</Text>
                     </View>
-                    <Text style={styles.recommendationBoxPrice}>
+                    <Text style={styles.recommendationPrice}>
                         {formatCurrency(data.userPricePerM2)}
-                        <Text style={styles.recommendationBoxUnit}> / m² (Seu Preço)</Text>
+                        <Text style={styles.recommendationUnit}> / m²</Text>
                     </Text>
-                    <Text style={styles.recommendationBoxMessage}>{message}</Text>
+                    <Text style={styles.recommendationSubtext}>{message}</Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>Comparação de Mercado (Preço/m²)</Text>
+                <Text style={styles.sectionTitle}>Comparativo de Preços (m²)</Text>
                 
-                <View style={styles.cardGrid}>
+                <View style={styles.gridContainer}>
+                    {/* Dados do Usuário */}
                     <InfoCard
                         icon={DollarSign}
-                        title="VALOR TOTAL INFORMADO"
+                        title="VALOR TOTAL DO IMÓVEL FORNECIDO POR VOCÊ"
                         value={formatCurrency(data.userPricePerM2 * data.m2ImovelNumerico)}
-                        unit=""
-                        color="bg-gray-700" 
-                        valueStyle={styles.miniInfoCardValueXSmall}
-                    />
-                    <InfoCard
-                        icon={Home}
-                        title="METRAGEM INFORMADA"
-                        value={String(data.m2ImovelNumerico)}
-                        unit=" m²"
                         color="bg-gray-700"
-                        containerStyle={styles.miniInfoCardCenterContent}
-                        valueStyle={styles.miniInfoCardValueGiant}
+                        containerStyle={{width: '100%', marginBottom: 10}}
+                        valueStyle={{fontSize: 24, color: COLORS.textPrimary}}
                     />
 
-                    <InfoCard
-                        icon={DollarSign}
-                        title="PREÇO MÉDIO FIPE"
-                        value={formatCurrency(data.preco_medio_fipe_m2)}
-                        unit="/ m²"
-                        color="bg-indigo-600"
-                        valueStyle={styles.miniInfoCardValueSmall}
-                    />
-                    <InfoCard
-                        icon={Search}
-                        title="PREÇO MÉDIO OLX"
-                        value={formatCurrency(data.preco_m2_olx)}
-                        unit="/ m²"
-                        color="bg-teal-600"
-                        valueStyle={styles.miniInfoCardValueSmall}
-                    />
-                    <InfoCard
-                        icon={DollarSign}
-                        title="PREÇO MÍNIMO FIPE"
-                        value={formatCurrency(data.preco_minimo_fipe_m2)}
-                        unit="/ m²"
-                        color="bg-indigo-600"
-                        valueStyle={styles.miniInfoCardValueSmall}
-                    />
-                    <InfoCard
-                        icon={DollarSign}
-                        title="PREÇO MÁXIMO FIPE"
-                        value={formatCurrency(data.preco_maximo_fipe_m2)}
-                        unit="/ m²"
-                        color="bg-indigo-600"
-                        valueStyle={styles.miniInfoCardValueSmall}
-                    />
+                    {/* Dados de Mercado (FIPE e OLX) */}
+                    <View style={styles.rowContainer}>
+                        <InfoCard
+                            icon={DollarSign}
+                            title="PREÇO MÉDIO FIPE"
+                            value={formatCurrency(data.preco_medio_fipe_m2)}
+                            color="bg-indigo-600"
+                            unit="/ m²"
+                            containerStyle={{width: '48%'}}
+                        />
+                        <InfoCard
+                            icon={Search}
+                            title="PREÇO MÉDIO OLX"
+                            value={formatCurrency(data.preco_m2_olx)}
+                            color="bg-teal-600"
+                            unit="/ m²"
+                            containerStyle={{width: '48%'}}
+                        />
+                    </View>
+                    
+                    <View style={styles.rowContainer}>
+                        <InfoCard
+                            icon={DollarSign}
+                            title="PREÇO MÍNIMO FIPE"
+                            value={formatCurrency(data.preco_minimo_fipe_m2)}
+                            color="bg-indigo-600"
+                            unit="/ m²"
+                            containerStyle={{width: '48%'}}
+                        />
+                        <InfoCard
+                            icon={DollarSign}
+                            title="PREÇO MÁXIMO FIPE"
+                            value={formatCurrency(data.preco_maximo_fipe_m2)}
+                            color="bg-indigo-600"
+                            unit="/ m²"
+                            containerStyle={{width: '48%'}}
+                        />
+                    </View>
                 </View>
 
-                <Text style={styles.sectionTitle}>Indicadores Socioeconômicos</Text>
+                <Text style={styles.sectionTitle}>Qualidade de Vida no Bairro</Text>
 
-                <View style={styles.cardGrid}>
-                    <IndicatorDisplay
-                        title="Índice de Bem Estar Urbano (IBEU)"
-                        value={data.ibeu}
-                        description="Nível de satisfação dos moradores do bairro."
-                        classifier={classifyIbeu}
-                    />
-                    <IndicatorDisplay
-                        title="Índice de Desenvolvimento Humano (IDH)"
-                        value={data.idh}
-                        description="Mede longevidade, educação e renda."
-                        classifier={classifyIndicator}
-                    />
-                    <IndicatorDisplay
-                        title="Condições Ambientais Urbanas"
-                        value={data.condicoes_ambientais_urbanas}
-                        description="Qualidade do ar, saneamento, etc. (1 é melhor)."
-                        classifier={classifyIndicator}
-                    />
-                    <IndicatorDisplay
-                        title="Condições Habitacionais Urbanas"
-                        value={data.condicoes_habitacionais_urbanas}
-                        description="Qualidade da moradia e entorno (1 é melhor)."
-                        classifier={classifyIndicator}
-                    />
+                <View style={styles.gridContainer}>
+                    <View style={styles.rowContainer}>
+                        <IndicatorDisplay
+                            title="IBEU"
+                            value={data.ibeu}
+                            description="Nível de satisfação dos moradores do bairro."
+                            classifier={classifyIbeu}
+                        />
+                        <IndicatorDisplay
+                            title="IDH"
+                            value={data.idh}
+                            description="Mede longevidade, educação e renda."
+                            classifier={classifyIndicator}
+                        />
+                    </View>
+                    <View style={styles.rowContainer}>
+                        <IndicatorDisplay
+                            title="Ambiental"
+                            value={data.condicoes_ambientais_urbanas}
+                            description="Qualidade do ar, saneamento, etc."
+                            classifier={classifyIndicator}
+                        />
+                        <IndicatorDisplay
+                            title="Habitacional"
+                            value={data.condicoes_habitacionais_urbanas}
+                            description="Qualidade da infraestrutura imobiliária."
+                            classifier={classifyIndicator}
+                        />
+                    </View>
                 </View>
                 
-                <View style={[styles.miniInfoCard, { backgroundColor: COLORS.grayCard, width: '100%', marginTop: 5, marginBottom: 20 }]}>
-                    <View style={styles.miniInfoCardHeader}>
-                        <Users size={16} color="#fff" />
-                        <Text style={styles.miniInfoCardTitle}>RENDIMENTO MÉDIO MENSAL FAMILIAR DO BAIRRO</Text>
+                <View style={styles.incomeCard}>
+                    <View style={styles.incomeHeader}>
+                        <Users size={18} color={COLORS.textSecondary} />
+                        <Text style={styles.incomeTitle}>RENDA MÉDIA MENSAL FAMILIAR DO BAIRRO</Text>
                     </View>
-                    <Text style={styles.miniInfoCardValue}>
+                    <Text style={styles.incomeValue}>
                         {formatCurrency(data.valor_rendimento_medio_mensal)}
                     </Text>
                 </View>
 
-                <View style={styles.dicaBox}>
-                    <View style={styles.dicaHeader}>
-                        <Zap size={18} color={COLORS.infoBoxText} />
-                        <Text style={styles.dicaTitle}>Decisão de Compra</Text>
+                <View style={styles.tipBox}>
+                    <View style={styles.tipHeader}>
+                        <Zap size={20} color={COLORS.infoBoxText} />
+                        <Text style={styles.tipTitle}>Dica de Investimento</Text>
                     </View>
-                    <Text style={styles.dicaText}>
+                    <Text style={styles.tipText}>
                         Se o seu preço/m² estiver <Text style={{fontWeight: 'bold'}}>abaixo</Text> do Preço Médio FIPE, a compra
                         é considerada um bom investimento com potencial de valorização
                         imediata. Analise a classificação do <Text style={{fontWeight: 'bold'}}>IBEU</Text> e <Text style={{fontWeight: 'bold'}}>IDH</Text> para entender
@@ -361,243 +382,233 @@ const ResultadoScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: COLORS.background },
-    scrollContent: { padding: 15, paddingBottom: 30 },
+    safeArea: { 
+        flex: 1, 
+        backgroundColor: COLORS.background 
+    },
+    scrollContent: { 
+        paddingHorizontal: 24, 
+        paddingBottom: 40,
+        paddingTop: 20,
+    },
     
-    customHeader: {
+    // HEADER
+    headerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
-        paddingHorizontal: 5,
-        backgroundColor: COLORS.card,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEE',
-        marginBottom: 15,
-        borderRadius: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-        elevation: 1,
-    },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 5,
-        paddingHorizontal: 1,
-    },
-    backButtonText: {
-        color: COLORS.primary,
-        fontSize: 16,
-        marginLeft: 0,
-        fontWeight: '600',
-    },
-    headerTitle: {
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: COLORS.title,
-        flex: 1,
-        marginHorizontal: 20,
-    },
-
-    recommendationBox: {
-        padding: 20,
-        borderRadius: 12,
-        shadowColor: 'rgba(0,0,0,0.15)',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-        elevation: 10,
-        marginBottom: 5,
-    },
-    recommendationBoxHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-        textAlign: 'center',
-    },
-    recommendationBoxStatus: {
-        fontSize: 22,
-        fontWeight: '800',
-        color: '#fff',
-        marginLeft: 10,
-        textTransform: 'uppercase',
-        textAlign: 'center',
-    },
-    recommendationBoxPrice: {
-        fontSize: 32,
-        fontWeight: '900',
-        color: '#fff',
-        marginTop: 5,
-        textAlign: 'center',
-    },
-    recommendationBoxUnit: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: 'rgba(255,255,255,0.85)',
-    },
-    recommendationBoxMessage: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.9)',
-        marginTop: 10,
-        lineHeight: 20,
-        textAlign: 'center',
-    },
-
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: COLORS.title,
-        marginTop: 25,
-        marginBottom: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
-        paddingBottom: 8,
-    },
-
-    cardGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginBottom: 10,
     },
-    miniInfoCard: {
-        width: '48%',
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 15,
-        shadowColor: 'rgba(219, 8, 8, 0.08)',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        justifyContent: 'space-between',
+    backButton: {
+        padding: 5,
     },
-    miniInfoCardCenterContent: {
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: COLORS.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    bairroTitle: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: COLORS.textPrimary,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+
+    // BOX DE RESULTADO
+    recommendationBox: {
+        padding: 24,
+        borderRadius: 24,
+        marginBottom: 25,
+        // Estilo de borda brilhante sutil
+        borderWidth: 1,
+    },
+    recommendationHeader: {
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 10,
+    },
+    recommendationStatus: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: COLORS.textPrimary,
+        marginLeft: 10,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    recommendationPrice: {
+        fontSize: 36,
+        fontWeight: '900',
+        color: COLORS.textPrimary,
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    recommendationUnit: {
+        fontSize: 16,
+        fontWeight: '400',
+        color: 'rgba(255,255,255,0.7)',
+    },
+    recommendationSubtext: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.9)',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+
+    // SEÇÕES
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+        marginBottom: 15,
+        marginTop: 10,
+        borderLeftWidth: 4,
+        borderLeftColor: COLORS.primary,
+        paddingLeft: 10,
+    },
+
+    // GRIDS E CARDS
+    gridContainer: {
+        marginBottom: 20,
+    },
+    rowContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+    },
+    
+    // INFO CARD (Preços)
+    miniInfoCard: {
+        backgroundColor: COLORS.cardSecondary,
+        borderRadius: 16,
+        padding: 16,
+        justifyContent: 'center',
     },
     miniInfoCardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
+        opacity: 0.8,
     },
     miniInfoCardTitle: {
         fontSize: 11,
-        fontWeight: '600',
-        color: '#fff',
-        marginLeft: 8,
+        fontWeight: '700',
+        color: COLORS.textSecondary,
+        marginLeft: 6,
         textTransform: 'uppercase',
-        opacity: 0.8,
     },
     miniInfoCardValue: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: '#fff',
-        marginTop: 5,
-    },
-    miniInfoCardValueXSmall: {
         fontSize: 18,
-        fontWeight: '800',
-        color: '#fff',
-        marginTop: 5,
-    },
-    miniInfoCardValueSmall: {
-        fontSize: 18,
-        fontWeight: '800',
-        color: '#fff',
-        marginTop: 5,
-    },
-    miniInfoCardValueGiant: {
-        fontSize: 30,
-        fontWeight: '900',
+        fontWeight: '700',
+        color: COLORS.textPrimary,
     },
     miniInfoCardUnit: {
         fontSize: 12,
-        fontWeight: '300',
-        opacity: 0.75,
+        fontWeight: '400',
+        color: COLORS.textSecondary,
     },
 
+    // INDICADORES (IDH, IBEU)
     indicatorDisplayCard: {
         width: '48%',
-        padding: 15,
         backgroundColor: COLORS.card,
-        borderRadius: 10,
-        shadowColor: 'rgba(0,0,0,0.05)',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 3,
-        elevation: 2,
-        marginBottom: 15,
+        borderRadius: 16,
+        padding: 16,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: COLORS.grayCard,
     },
     indicatorDisplayTitle: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '600',
-        color: COLORS.label,
-        marginBottom: 5,
+        color: COLORS.textSecondary,
+        marginBottom: 8,
     },
     indicatorDisplayRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 5,
+        marginBottom: 8,
     },
     indicatorDisplayValue: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: '700',
-        color: COLORS.text,
+        color: COLORS.textPrimary,
     },
     indicatorDisplayBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 15,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+        borderWidth: 1,
+        backgroundColor: 'rgba(0,0,0,0.2)',
     },
     indicatorDisplayBadgeText: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '700',
-        color: '#fff',
     },
     indicatorDisplayDescription: {
-        fontSize: 12,
-        color: COLORS.label,
-        marginTop: 8,
-        lineHeight: 12,
-        textAlign: 'center',
+        fontSize: 11,
+        color: COLORS.textSecondary,
+        lineHeight: 14,
+        opacity: 0.7,
     },
 
-    dicaBox: {
-        padding: 18,
+    // CARD RENDA
+    incomeCard: {
+        backgroundColor: COLORS.card,
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 25,
+        borderWidth: 1,
+        borderColor: COLORS.grayCard,
+        alignItems: 'center',
+    },
+    incomeHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 5,
+    },
+    incomeTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: COLORS.textSecondary,
+        marginLeft: 8,
+        textTransform: 'uppercase',
+    },
+    incomeValue: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+    },
+
+    // DICA
+    tipBox: {
         backgroundColor: COLORS.infoBoxBg,
         borderWidth: 1,
         borderColor: COLORS.infoBoxBorder,
-        borderRadius: 10,
-        marginTop: 20,
-        shadowColor: 'rgba(0,0,0,0.05)',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 3,
-        elevation: 2,
+        borderRadius: 16,
+        padding: 20,
     },
-    dicaHeader: {
+    tipHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 10,
     },
-    dicaTitle: {
+    tipTitle: {
+        fontSize: 16,
         fontWeight: '700',
         color: COLORS.infoBoxText,
-        marginLeft: 8,
-        fontSize: 25,
+        marginLeft: 10,
     },
-    dicaText: {
-        fontSize: 15,
-        color: COLORS.text,
-        lineHeight: 19,
-        textAlign: 'justify',
+    tipText: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        lineHeight: 20,
     },
 
+    // ERRO
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -606,24 +617,19 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.background,
     },
     errorText: {
-        fontSize: 16,
-        color: COLORS.redDanger,
+        fontSize: 18,
+        color: COLORS.textSecondary,
         marginBottom: 20,
         textAlign: 'center',
-        lineHeight: 22,
     },
     retryButton: {
         backgroundColor: COLORS.primary,
-        padding: 15,
-        borderRadius: 8,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+        paddingHorizontal: 30,
+        paddingVertical: 15,
+        borderRadius: 12,
     },
     retryButtonText: {
-        color: '#fff',
+        color: COLORS.textPrimary,
         fontWeight: 'bold',
         fontSize: 16,
     },
