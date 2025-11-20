@@ -426,14 +426,14 @@ const ResultadoScreen = () => {
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={DollarSign}
-                            title="MÉDIO FIPE"
+                            title="PREÇO MÉDIO FIPE"
                             value={formatCurrency(data.preco_medio_fipe_m2)}
                             color="bg-indigo-600"
                             containerStyle={{width: '48%'}}
                         />
                         <InfoCard
                             icon={Search}
-                            title="MÉDIO OLX"
+                            title="PREÇO MÉDIO OLX"
                             value={formatCurrency(data.preco_m2_olx)}
                             color="bg-teal-600"
                             containerStyle={{width: '48%'}}
@@ -443,14 +443,14 @@ const ResultadoScreen = () => {
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={DollarSign}
-                            title="MÍNIMO FIPE"
+                            title="PREÇO MÍNIMO FIPE"
                             value={formatCurrency(data.preco_minimo_fipe_m2)}
                             color="bg-indigo-600"
                             containerStyle={{width: '48%'}}
                         />
                         <InfoCard
                             icon={DollarSign}
-                            title="MÁXIMO FIPE"
+                            title="PREÇO MÁXIMO FIPE"
                             value={formatCurrency(data.preco_maximo_fipe_m2)}
                             color="bg-indigo-600"
                             containerStyle={{width: '48%'}}
@@ -459,18 +459,18 @@ const ResultadoScreen = () => {
                 </View>
 
                 {/* SEÇÃO 2: MOBILIDADE URBANA */}
-                <Text style={styles.sectionTitle}>Mobilidade Urbana</Text>
+                <Text style={styles.sectionTitle}>Mobilidade</Text>
                 <View style={styles.gridContainer}>
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={Bus}
-                            title="PONTOS DE ÔNIBUS"
+                            title="QUANTIDADE DE PONTOS DE ÔNIBUS"
                             value={data.pontos_de_onibus || '0'}
                             containerStyle={{width: '48%'}}
                         />
                          <InfoCard
                             icon={Bike}
-                            title="ESTAÇÕES BICICLETAR"
+                            title="QUANTIDADE ESTAÇÕES BICICLETAR"
                             value={data.estacoes_bicicletar || '0'}
                             containerStyle={{width: '48%'}}
                         />
@@ -478,7 +478,7 @@ const ResultadoScreen = () => {
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={Bike}
-                            title="CICLOVIAS (KM)"
+                            title="CICLOVIAS NO BAIRRO (KM)"
                             value={data.ciclovias_km || '0'}
                             unit=" km"
                             containerStyle={{width: '48%'}}
@@ -501,13 +501,13 @@ const ResultadoScreen = () => {
                       <View style={styles.rowContainer}>
                         <InfoCard
                             icon={GraduationCap}
-                            title="ESCOLAS PÚBLICAS"
+                            title="QUANTIDADE DE ESCOLAS PÚBLICAS"
                             value={String(data.totalEscolas)}
                             containerStyle={{width: '48%'}}
                         />
                         <InfoCard
                             icon={HeartPulse}
-                            title="EQUIP. DE SAÚDE"
+                            title="QUANTIDADE DE UPAS E POSTOS DE SAÚDE"
                             value={data.equipamentos_de_saude || '0'}
                             containerStyle={{width: '48%'}}
                         />
@@ -516,13 +516,13 @@ const ResultadoScreen = () => {
                     <View style={styles.rowContainer}>
                          <InfoCard
                             icon={BookOpen}
-                            title="UNID. RELIGIOSAS"
+                            title="QUANTIDADE DE IGREJAS E TEMPLOS"
                             value={data.unidades_religiosas || '0'}
                             containerStyle={{width: '48%'}}
                         />
                         <InfoCard
                             icon={Activity}
-                            title="SITUAÇÃO EDUC. E SAÚDE"
+                            title="SITUAÇÃO DA EDUCAÇÃO E SAÚDE"
                             value={data.eduHealthStatus.label}
                             valueStyle={{ color: data.eduHealthStatus.color }}
                             iconColorOverride={data.eduHealthStatus.color}
@@ -562,29 +562,29 @@ const ResultadoScreen = () => {
                 <View style={styles.gridContainer}>
                     <View style={styles.rowContainer}>
                         <IndicatorDisplay
-                            title="IBEU"
+                            title="Índiece de Bem-Estar Urbano (IBEU)"
                             value={data.ibeu}
-                            description="Bem-estar urbano"
+                            description="Nível de satisfação dos moradores do bairro"
                             classifier={classifyIbeu}
                         />
                         <IndicatorDisplay
-                            title="IDH"
+                            title="Índice de Desenvolvimento Humano (IDH)"
                             value={data.idh}
-                            description="Desenv. Humano"
+                            description="Mede longevidade, educação e renda"
                             classifier={classifyIndicator}
                         />
                     </View>
                     <View style={styles.rowContainer}>
                         <IndicatorDisplay
-                            title="Índice Ambiental"
+                            title="Índice de Situação Ambiental"
                             value={data.condicoes_ambientais_urbanas}
                             description="Qualidade do ar e saneamento"
                             classifier={classifyIndicator}
                         />
                         <IndicatorDisplay
-                            title="Índice Habitacional"
+                            title="Índice de Situação Habitacional"
                             value={data.condicoes_habitacionais_urbanas}
-                            description="Qualidade da moradia"
+                            description="Qualidade da moradia e infraestrutura"
                             classifier={classifyIndicator}
                         />
                     </View>
@@ -593,7 +593,7 @@ const ResultadoScreen = () => {
                 <View style={styles.incomeCard}>
                     <View style={styles.incomeHeader}>
                         <Users size={18} color={COLORS.textSecondary} />
-                        <Text style={styles.incomeTitle}>RENDA MÉDIA FAMILIAR</Text>
+                        <Text style={styles.incomeTitle}>RENDA MÉDIA MENSAL DAS FAMÍLIAS DO BAIRRO </Text>
                     </View>
                     <Text style={styles.incomeValue}>
                         {formatCurrency(data.valor_rendimento_medio_mensal)}
@@ -602,7 +602,7 @@ const ResultadoScreen = () => {
 
                 {data.historia && (
                     <>
-                        <Text style={styles.sectionTitle}>Histórico e Curiosidades</Text>
+                        <Text style={styles.sectionTitle}>História e Curiosidades</Text>
                         <View style={styles.historyBox}>
                              <Text style={styles.historyText}>
                                 {data.historia}
@@ -629,7 +629,10 @@ const ResultadoScreen = () => {
                         <Text style={styles.tipTitle}>Dica de Investimento</Text>
                     </View>
                     <Text style={styles.tipText}>
-                        Imóveis abaixo da média FIPE em bairros com alta infraestrutura de transporte e educação tendem a ter maior liquidez e valorização. Compare sempre com o estado de conservação do imóvel.
+                        Imóveis abaixo da média FIPE em bairros com alta infraestrutura de transporte e educação tendem a ter maior liquidez e valorização. Se o seu preço/m² estiver <Text style={{fontWeight: 'bold'}}>abaixo</Text> do Preço Médio FIPE, a compra
+                        é considerada um bom investimento com potencial de valorização
+                        imediata. Analise a classificação do <Text style={{fontWeight: 'bold'}}>IBEU</Text> e <Text style={{fontWeight: 'bold'}}>IDH</Text> para entender
+                        a qualidade de vida e o desenvolvimento social do bairro. Compare sempre com o estado de conservação do imóvel.
                     </Text>
                 </View>
 
