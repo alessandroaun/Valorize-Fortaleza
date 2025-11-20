@@ -14,39 +14,43 @@ import {
     StatusBar
 } from 'react-native';
 
-import { ChevronLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search } from 'lucide-react-native';
+import { 
+    ChevronLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search, 
+    Bus, Bike, Wifi, GraduationCap, HeartPulse, BookOpen, Trees, Activity 
+} from 'lucide-react-native';
 
 import BAIRROS_DATA from '../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
-// 🌑 --- PALETA DE CORES DARK (Consistente com index.tsx) ---
+// 🌑 --- PALETA DE CORES DARK ---
 const COLORS = {
     background: '#0f1d2aff', 
     card: '#1E293B',
-    cardSecondary: '#334155', // Usado para cards menores dentro do principal
+    cardSecondary: '#334155',
     
     primary: '#11ac5eff',
     accent: '#10B981',
     
-    text: '#1ff087ff', // Verde claro vibrante para destaques de texto
-    textPrimary: '#F8FAFC', // Branco para textos principais
-    textSecondary: '#94A3B8', // Cinza para legendas
+    text: '#1ff087ff', 
+    textPrimary: '#F8FAFC', 
+    textSecondary: '#94A3B8', 
     
-    // Cores de Status (Adaptadas para Dark Mode)
-    greenSuccess: '#059669', // Verde mais escuro para fundo
-    greenLight: '#10B981',   // Verde vibrante
-    yellowWarning: '#D97706', // Laranja/Amarelo escuro
+    // Cores de Status
+    greenSuccess: '#059669', 
+    greenLight: '#10B981',   
+    yellowWarning: '#D97706', 
     orangeAlert: '#EA580C',
     redDanger: '#DC2626',
     
     indigoCard: '#4F46E5',
     tealCard: '#0D9488',
     grayCard: '#475569',
+    purpleCard: '#7C3AED',
     
-    infoBoxBg: 'rgba(59, 130, 246, 0.1)', // Azul transparente
+    infoBoxBg: 'rgba(59, 130, 246, 0.1)', 
     infoBoxBorder: 'rgba(59, 130, 246, 0.3)',
-    infoBoxText: '#60A5FA', // Azul claro
+    infoBoxText: '#60A5FA', 
 };
 
 interface BairroFullData {
@@ -60,6 +64,18 @@ interface BairroFullData {
     condicoes_ambientais_urbanas: string;
     condicoes_habitacionais_urbanas: string;
     valor_rendimento_medio_mensal: string;
+    regional: string;
+    pracas: string;
+    acesso_pracas_300m_percentual: string;
+    wifi_publico_wifor: string;
+    pontos_de_onibus: string;
+    ciclovias_km: string;
+    estacoes_bicicletar: string;
+    equipamentos_de_saude: string;
+    escolas_municipais: string;
+    escolas_estaduais: string;
+    unidades_religiosas: string;
+    historia: string;
 }
 
 interface SearchParams {
@@ -71,7 +87,8 @@ interface SearchParams {
 const formatCurrency = (value: number) =>
     (isNaN(value) ? 0 : value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
-// Funções de Classificação (Cores ajustadas para texto ou badge)
+// --- LÓGICA DE CLASSIFICAÇÃO ---
+
 const classifyIbeu = (value: string) => {
     const num = parseFloat(value || '0');
     if (num >= 0.9) return { label: 'Muito Alto', color: COLORS.greenLight };
@@ -89,7 +106,29 @@ const classifyIndicator = (value: string) => {
     return { label: 'Ruim', color: COLORS.redDanger };
 };
 
-// Estilos de cor para backgrounds (Badges e Cards)
+// Classificação Mobilidade
+const calculateMobilityStatus = (bus: string, bikes: string, ciclovias: string) => {
+    const nBus = parseInt(bus || '0', 10);
+    const nBikes = parseInt(bikes || '0', 10);
+    const nCiclo = parseFloat(ciclovias || '0');
+    const score = (nBus * 1) + (nBikes * 5) + (nCiclo * 3);
+
+    if (score > 60) return { label: 'Excelente', color: COLORS.greenLight };
+    if (score > 30) return { label: 'Boa', color: COLORS.greenLight };
+    if (score > 15) return { label: 'Regular', color: COLORS.yellowWarning };
+    return { label: 'Limitada', color: COLORS.orangeAlert };
+};
+
+// Classificação Educação e Saúde
+const calculateEduHealthStatus = (totalSchools: number, healthUnits: number) => {
+    const score = totalSchools + (healthUnits * 3);
+
+    if (score > 25) return { label: 'Excelente', color: COLORS.greenLight };
+    if (score > 15) return { label: 'Boa', color: COLORS.greenLight };
+    if (score > 5) return { label: 'Regular', color: COLORS.yellowWarning };
+    return { label: 'Limitada', color: COLORS.orangeAlert };
+};
+
 const getRNColorStyle = (colorName: string) => {
     switch (colorName) {
         case 'bg-green-600': return { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: COLORS.greenLight, borderWidth: 1 };
@@ -97,9 +136,6 @@ const getRNColorStyle = (colorName: string) => {
         case 'bg-yellow-500': return { backgroundColor: 'rgba(245, 158, 11, 0.2)', borderColor: '#FBBF24', borderWidth: 1 };
         case 'bg-orange-500': return { backgroundColor: 'rgba(249, 115, 22, 0.2)', borderColor: '#FB923C', borderWidth: 1 };
         case 'bg-red-600': return { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: '#F87171', borderWidth: 1 };
-        case 'bg-indigo-600': return { backgroundColor: COLORS.cardSecondary }; // Cards neutros
-        case 'bg-teal-600': return { backgroundColor: COLORS.cardSecondary };
-        case 'bg-gray-700': return { backgroundColor: COLORS.cardSecondary };
         default: return { backgroundColor: COLORS.cardSecondary };
     }
 };
@@ -109,17 +145,25 @@ interface InfoCardProps {
     title: string;
     value: string;
     unit?: string;
-    color: string; // Mantido para compatibilidade, mas a cor visual será controlada pelo estilo dark
+    color?: string;
     valueStyle?: StyleProp<TextStyle>;
     containerStyle?: StyleProp<ViewStyle>;
+    iconColorOverride?: string;
 }
 
-const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, color, valueStyle, containerStyle }) => {
-    // No tema dark, usamos uma cor de card padrão e ícones coloridos para diferenciar
-    let iconColor = COLORS.text;
-    if (title.includes('FIPE')) iconColor = '#818CF8'; // Indigo claro
-    if (title.includes('OLX')) iconColor = '#2DD4BF'; // Teal claro
-    if (title.includes('TOTAL') || title.includes('METRAGEM')) iconColor = COLORS.textSecondary;
+const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, title, value, unit, color, valueStyle, containerStyle, iconColorOverride }) => {
+    let iconColor = iconColorOverride || COLORS.text;
+    
+    if (!iconColorOverride) {
+        if (title.includes('FIPE')) iconColor = '#818CF8';
+        if (title.includes('OLX')) iconColor = '#2DD4BF';
+        if (title.includes('TOTAL') || title.includes('METRAGEM')) iconColor = COLORS.textSecondary;
+        if (title.includes('ÔNIBUS')) iconColor = '#F59E0B'; 
+        if (title.includes('CICLO') || title.includes('BICICLETAR')) iconColor = '#10B981'; 
+        if (title.includes('ESCOLAS')) iconColor = '#A78BFA'; 
+        if (title.includes('SAÚDE')) iconColor = '#F43F5E'; 
+        if (title.includes('SITUAÇÃO')) iconColor = COLORS.textPrimary; 
+    }
 
     return (
         <View style={[styles.miniInfoCard, containerStyle]}>
@@ -168,6 +212,64 @@ const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, descr
     );
 };
 
+// NOVO COMPONENTE PARA DADOS DE ENTRADA
+interface InputDisplayCardProps {
+    totalValue: number;
+    area: number;
+}
+
+const InputDisplayCard: React.FC<InputDisplayCardProps> = ({ totalValue, area }) => (
+    <View style={styles.inputDisplayCardContainer}>
+        {/* Aplica o novo estilo de alinhamento à esquerda aqui */}
+        <View style={styles.inputDisplayItemLeft}>
+            <View style={styles.inputDisplayHeader}>
+                <DollarSign size={24} color={COLORS.primary} />
+                <Text 
+                    style={styles.inputDisplayTitle} 
+                    numberOfLines={1} 
+                    ellipsizeMode="tail"
+                >
+                    VALOR TOTAL
+                </Text>
+            </View>
+            {/* NOVO: Propriedades para garantir que o valor não quebre linha */}
+            <Text 
+                style={styles.inputDisplayValueTotal}
+                numberOfLines={1} 
+                ellipsizeMode="tail"
+            > 
+                {formatCurrency(totalValue)}
+            </Text>
+        </View>
+
+        <View style={styles.inputDisplaySeparator} />
+
+        {/* Usa o estilo original/centralizado (inputDisplayItem) aqui */}
+        <View style={styles.inputDisplayItem}>
+            <View style={styles.inputDisplayHeader}>
+                <Home size={24} color={COLORS.primary} />
+                <Text 
+                    style={styles.inputDisplayTitle}
+                    numberOfLines={1} 
+                    ellipsizeMode="tail"
+                >
+                    ÁREA TOTAL (M²)
+                </Text>
+            </View>
+            {/* NOVO: Propriedades para garantir que o valor não quebre linha */}
+            <Text 
+                style={styles.inputDisplayValue}
+                numberOfLines={1} 
+                ellipsizeMode="tail"
+            > 
+                {area}
+                <Text style={styles.inputDisplayUnit}> m²</Text>
+            </Text>
+        </View>
+    </View>
+);
+
+
 const ResultadoScreen = () => {
     const params = useLocalSearchParams() as unknown as SearchParams;
     const router = useRouter();
@@ -197,6 +299,21 @@ const ResultadoScreen = () => {
             userPricePerM2,
         };
 
+        // 1. Cálculo Mobilidade
+        const mobilityStatus = calculateMobilityStatus(
+            bairroData.pontos_de_onibus, 
+            bairroData.estacoes_bicicletar, 
+            bairroData.ciclovias_km
+        );
+
+        // 2. Cálculo Educação e Saúde
+        const nEscolasMun = parseInt(bairroData.escolas_municipais || '0', 10);
+        const nEscolasEst = parseInt(bairroData.escolas_estaduais || '0', 10);
+        const totalEscolas = nEscolasMun + nEscolasEst;
+        const nSaude = parseInt(bairroData.equipamentos_de_saude || '0', 10);
+
+        const eduHealthStatus = calculateEduHealthStatus(totalEscolas, nSaude);
+
         let vantagem = {
             status: 'PREÇO JUSTO',
             message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está em linha com a média oficial do mercado do bairro. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`,
@@ -211,7 +328,15 @@ const ResultadoScreen = () => {
             vantagem = { status: 'PREÇO ELEVADO', message: `Seu preço/m² (${formatCurrency(userPricePerM2)}) está acima do valor oficial de mercado. Reavalie. O preço médio no OLX é ${formatCurrency(data.preco_m2_olx)}.`, color: 'bg-red-600' };
         }
         
-        return { ...data, vantagem, m2ImovelNumerico: m2ImovelNumerico };
+        return { 
+            ...data, 
+            vantagem, 
+            m2ImovelNumerico: m2ImovelNumerico, 
+            valorImovelNumerico: valorImovelNumerico, 
+            mobilityStatus,
+            totalEscolas,
+            eduHealthStatus 
+        };
     }, [bairro, valor, metrosQuadrados]);
 
 
@@ -243,7 +368,7 @@ const ResultadoScreen = () => {
             
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
-                {/* HEADER SIMPLES */}
+                {/* HEADER */}
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <ChevronLeft size={28} color={COLORS.textPrimary} />
@@ -253,6 +378,13 @@ const ResultadoScreen = () => {
                 </View>
 
                 <Text style={styles.bairroTitle}>{data.bairro}</Text>
+                
+                <View style={styles.regionalBadgeContainer}>
+                    <View style={styles.regionalBadge}>
+                        <MapPin size={12} color={COLORS.textPrimary} style={{marginRight: 4}}/>
+                        <Text style={styles.regionalText}>{data.regional || 'Regional N/A'}</Text>
+                    </View>
+                </View>
 
                 {/* BOX DE RESULTADO PRINCIPAL */}
                 <View style={[styles.recommendationBox, vantagemColorStyle]}>
@@ -267,35 +399,31 @@ const ResultadoScreen = () => {
                     <Text style={styles.recommendationSubtext}>{message}</Text>
                 </View>
 
+                {/* SEÇÃO 1: PREÇOS */}
                 <Text style={styles.sectionTitle}>Comparativo de Preços (m²)</Text>
                 
                 <View style={styles.gridContainer}>
-                    {/* Dados do Usuário */}
-                    <InfoCard
-                        icon={DollarSign}
-                        title="VALOR TOTAL DO IMÓVEL FORNECIDO POR VOCÊ"
-                        value={formatCurrency(data.userPricePerM2 * data.m2ImovelNumerico)}
-                        color="bg-gray-700"
-                        containerStyle={{width: '100%', marginBottom: 10}}
-                        valueStyle={{fontSize: 24, color: COLORS.textPrimary}}
+                    
+                    {/* CARTÃO DE DESTAQUE COM INPUTS DO USUÁRIO */}
+                    <InputDisplayCard 
+                        totalValue={data.valorImovelNumerico}
+                        area={data.m2ImovelNumerico}
                     />
 
-                    {/* Dados de Mercado (FIPE e OLX) */}
+                    {/* Dados de Mercado */}
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={DollarSign}
-                            title="PREÇO MÉDIO FIPE"
+                            title="MÉDIO FIPE"
                             value={formatCurrency(data.preco_medio_fipe_m2)}
                             color="bg-indigo-600"
-                            unit="/ m²"
                             containerStyle={{width: '48%'}}
                         />
                         <InfoCard
                             icon={Search}
-                            title="PREÇO MÉDIO OLX"
+                            title="MÉDIO OLX"
                             value={formatCurrency(data.preco_m2_olx)}
                             color="bg-teal-600"
-                            unit="/ m²"
                             containerStyle={{width: '48%'}}
                         />
                     </View>
@@ -303,51 +431,148 @@ const ResultadoScreen = () => {
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={DollarSign}
-                            title="PREÇO MÍNIMO FIPE"
+                            title="MÍNIMO FIPE"
                             value={formatCurrency(data.preco_minimo_fipe_m2)}
                             color="bg-indigo-600"
-                            unit="/ m²"
                             containerStyle={{width: '48%'}}
                         />
                         <InfoCard
                             icon={DollarSign}
-                            title="PREÇO MÁXIMO FIPE"
+                            title="MÁXIMO FIPE"
                             value={formatCurrency(data.preco_maximo_fipe_m2)}
                             color="bg-indigo-600"
-                            unit="/ m²"
                             containerStyle={{width: '48%'}}
                         />
                     </View>
                 </View>
 
-                <Text style={styles.sectionTitle}>Qualidade de Vida no Bairro</Text>
+                {/* SEÇÃO 2: MOBILIDADE URBANA */}
+                <Text style={styles.sectionTitle}>Mobilidade Urbana</Text>
+                <View style={styles.gridContainer}>
+                    <View style={styles.rowContainer}>
+                        <InfoCard
+                            icon={Bus}
+                            title="PONTOS DE ÔNIBUS"
+                            value={data.pontos_de_onibus || '0'}
+                            containerStyle={{width: '48%'}}
+                        />
+                         <InfoCard
+                            icon={Bike}
+                            title="ESTAÇÕES BICICLETAR"
+                            value={data.estacoes_bicicletar || '0'}
+                            containerStyle={{width: '48%'}}
+                        />
+                    </View>
+                    <View style={styles.rowContainer}>
+                        <InfoCard
+                            icon={Bike}
+                            title="CICLOVIAS (KM)"
+                            value={data.ciclovias_km || '0'}
+                            unit=" km"
+                            containerStyle={{width: '48%'}}
+                        />
+                        <InfoCard
+                            icon={Activity}
+                            title="SITUAÇÃO MOBILIDADE"
+                            value={data.mobilityStatus.label}
+                            valueStyle={{ color: data.mobilityStatus.color }}
+                            iconColorOverride={data.mobilityStatus.color}
+                            containerStyle={{width: '48%'}}
+                        />
+                    </View>
+                </View>
 
+                {/* SEÇÃO 3: EDUCAÇÃO E SAÚDE */}
+                <Text style={styles.sectionTitle}>Educação e Saúde</Text>
+                <View style={styles.gridContainer}>
+                    {/* Linha 1: Escolas Públicas e Equip. Saúde */}
+                     <View style={styles.rowContainer}>
+                        <InfoCard
+                            icon={GraduationCap}
+                            title="ESCOLAS PÚBLICAS"
+                            value={String(data.totalEscolas)}
+                            containerStyle={{width: '48%'}}
+                        />
+                        <InfoCard
+                            icon={HeartPulse}
+                            title="EQUIP. DE SAÚDE"
+                            value={data.equipamentos_de_saude || '0'}
+                            containerStyle={{width: '48%'}}
+                        />
+                    </View>
+                    {/* Linha 2: Unid. Religiosas e Situação */}
+                    <View style={styles.rowContainer}>
+                         <InfoCard
+                            icon={BookOpen}
+                            title="UNID. RELIGIOSAS"
+                            value={data.unidades_religiosas || '0'}
+                            containerStyle={{width: '48%'}}
+                        />
+                        <InfoCard
+                            icon={Activity}
+                            title="SITUAÇÃO EDUC. E SAÚDE"
+                            value={data.eduHealthStatus.label}
+                            valueStyle={{ color: data.eduHealthStatus.color }}
+                            iconColorOverride={data.eduHealthStatus.color}
+                            containerStyle={{width: '48%'}}
+                        />
+                    </View>
+                </View>
+
+                {/* SEÇÃO 4: LAZER */}
+                <Text style={styles.sectionTitle}>Lazer e Conectividade</Text>
+                <View style={styles.gridContainer}>
+                     <View style={styles.rowContainer}>
+                        <InfoCard
+                            icon={Trees}
+                            title="PRAÇAS"
+                            value={data.pracas || '0'}
+                            containerStyle={{width: '32%'}}
+                        />
+                        <InfoCard
+                            icon={Trees}
+                            title="ACESSO A PRAÇAS"
+                            value={data.acesso_pracas_300m_percentual || '0'}
+                            unit="%"
+                            containerStyle={{width: '32%'}}
+                        />
+                         <InfoCard
+                            icon={Wifi}
+                            title="WIFI PÚBLICO"
+                            value={data.wifi_publico_wifor || '0'}
+                            containerStyle={{width: '32%'}}
+                        />
+                    </View>
+                </View>
+
+                {/* SEÇÃO 5: QUALIDADE DE VIDA */}
+                <Text style={styles.sectionTitle}>Qualidade de Vida</Text>
                 <View style={styles.gridContainer}>
                     <View style={styles.rowContainer}>
                         <IndicatorDisplay
                             title="IBEU"
                             value={data.ibeu}
-                            description="Nível de satisfação dos moradores do bairro."
+                            description="Bem-estar urbano"
                             classifier={classifyIbeu}
                         />
                         <IndicatorDisplay
                             title="IDH"
                             value={data.idh}
-                            description="Mede longevidade, educação e renda."
+                            description="Desenv. Humano"
                             classifier={classifyIndicator}
                         />
                     </View>
                     <View style={styles.rowContainer}>
                         <IndicatorDisplay
-                            title="Ambiental"
+                            title="Índice Ambiental"
                             value={data.condicoes_ambientais_urbanas}
-                            description="Qualidade do ar, saneamento, etc."
+                            description="Qualidade do ar e saneamento"
                             classifier={classifyIndicator}
                         />
                         <IndicatorDisplay
-                            title="Habitacional"
+                            title="Índice Habitacional"
                             value={data.condicoes_habitacionais_urbanas}
-                            description="Qualidade da infraestrutura imobiliária."
+                            description="Qualidade da moradia"
                             classifier={classifyIndicator}
                         />
                     </View>
@@ -356,12 +581,23 @@ const ResultadoScreen = () => {
                 <View style={styles.incomeCard}>
                     <View style={styles.incomeHeader}>
                         <Users size={18} color={COLORS.textSecondary} />
-                        <Text style={styles.incomeTitle}>RENDA MÉDIA MENSAL FAMILIAR DO BAIRRO</Text>
+                        <Text style={styles.incomeTitle}>RENDA MÉDIA FAMILIAR</Text>
                     </View>
                     <Text style={styles.incomeValue}>
                         {formatCurrency(data.valor_rendimento_medio_mensal)}
                     </Text>
                 </View>
+
+                {data.historia && (
+                    <>
+                        <Text style={styles.sectionTitle}>Histórico e Curiosidades</Text>
+                        <View style={styles.historyBox}>
+                             <Text style={styles.historyText}>
+                                {data.historia}
+                             </Text>
+                        </View>
+                    </>
+                )}
 
                 <View style={styles.tipBox}>
                     <View style={styles.tipHeader}>
@@ -369,10 +605,7 @@ const ResultadoScreen = () => {
                         <Text style={styles.tipTitle}>Dica de Investimento</Text>
                     </View>
                     <Text style={styles.tipText}>
-                        Se o seu preço/m² estiver <Text style={{fontWeight: 'bold'}}>abaixo</Text> do Preço Médio FIPE, a compra
-                        é considerada um bom investimento com potencial de valorização
-                        imediata. Analise a classificação do <Text style={{fontWeight: 'bold'}}>IBEU</Text> e <Text style={{fontWeight: 'bold'}}>IDH</Text> para entender
-                        a qualidade de vida e o desenvolvimento social do bairro.
+                        Imóveis abaixo da média FIPE em bairros com alta infraestrutura de transporte e educação tendem a ter maior liquidez e valorização. Compare sempre com o estado de conservação do imóvel.
                     </Text>
                 </View>
 
@@ -413,8 +646,25 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: 'bold',
         color: COLORS.textPrimary,
-        marginBottom: 20,
         textAlign: 'center',
+        marginBottom: 5,
+    },
+    regionalBadgeContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    regionalBadge: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.cardSecondary,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        alignItems: 'center',
+    },
+    regionalText: {
+        color: COLORS.textPrimary,
+        fontSize: 12,
+        fontWeight: '700',
     },
 
     // BOX DE RESULTADO
@@ -422,7 +672,6 @@ const styles = StyleSheet.create({
         padding: 24,
         borderRadius: 24,
         marginBottom: 25,
-        // Estilo de borda brilhante sutil
         borderWidth: 1,
     },
     recommendationHeader: {
@@ -472,7 +721,7 @@ const styles = StyleSheet.create({
 
     // GRIDS E CARDS
     gridContainer: {
-        marginBottom: 20,
+        marginBottom: 10,
     },
     rowContainer: {
         flexDirection: 'row',
@@ -480,7 +729,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     
-    // INFO CARD (Preços)
+    // INFO CARD (Genérico)
     miniInfoCard: {
         backgroundColor: COLORS.cardSecondary,
         borderRadius: 16,
@@ -491,14 +740,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 6,
-        opacity: 0.8,
+        opacity: 0.9,
     },
     miniInfoCardTitle: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: '700',
         color: COLORS.textSecondary,
         marginLeft: 6,
         textTransform: 'uppercase',
+        flex: 1,
     },
     miniInfoCardValue: {
         fontSize: 18,
@@ -510,6 +760,65 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         color: COLORS.textSecondary,
     },
+
+    // NOVO CARD DE INPUT DE USUÁRIO (DESTAQUE)
+    inputDisplayCardContainer: {
+        backgroundColor: COLORS.card,
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+    },
+    // ESTILO CENTRALIZADO (Padrão para Área Total)
+    inputDisplayItem: {
+        alignItems: 'center', // Alinhamento central para a Área Total (M²)
+        flex: 1,
+    },
+    // NOVO ESTILO PARA ALINHAR À ESQUERDA (Valor Total)
+    inputDisplayItemLeft: { 
+        alignItems: 'flex-start', // Alinhamento à esquerda para o Valor Total
+        flex: 1,
+    },
+    inputDisplayHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    inputDisplayTitle: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: COLORS.textSecondary,
+        marginLeft: 8,
+        textTransform: 'uppercase',
+        flexShrink: 1, 
+    },
+    // Estilo para a ÁREA TOTAL (M²).
+    inputDisplayValue: {
+        fontSize: 24, 
+        fontWeight: '900',
+        color: COLORS.textPrimary,
+    },
+    // Estilo específico para o VALOR TOTAL (INPUT) para acomodar números longos.
+    inputDisplayValueTotal: {
+        fontSize: 20, // Fonte reduzida para o valor
+        fontWeight: '900',
+        color: COLORS.textPrimary,
+    },
+    inputDisplayUnit: {
+        fontSize: 16,
+        fontWeight: '400',
+        color: COLORS.textSecondary,
+    },
+    inputDisplaySeparator: {
+        width: 1,
+        height: '80%',
+        backgroundColor: COLORS.cardSecondary,
+    },
+
 
     // INDICADORES (IDH, IBEU)
     indicatorDisplayCard: {
@@ -564,6 +873,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.grayCard,
         alignItems: 'center',
+        marginTop: 10,
     },
     incomeHeader: {
         flexDirection: 'row',
@@ -583,6 +893,23 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
     },
 
+    // HISTÓRIA
+    historyBox: {
+        backgroundColor: COLORS.card,
+        padding: 20,
+        borderRadius: 16,
+        marginBottom: 25,
+        borderWidth: 1,
+        borderColor: COLORS.grayCard,
+    },
+    historyText: {
+        color: COLORS.textPrimary,
+        fontSize: 15,
+        lineHeight: 24,
+        textAlign: 'justify',
+        opacity: 0.9,
+    },
+
     // DICA
     tipBox: {
         backgroundColor: COLORS.infoBoxBg,
@@ -590,6 +917,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.infoBoxBorder,
         borderRadius: 16,
         padding: 20,
+        marginTop: 10,
     },
     tipHeader: {
         flexDirection: 'row',
