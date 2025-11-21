@@ -17,44 +17,28 @@ import {
     StatusBar
 } from 'react-native';
 
-// Ícones
 import { DollarSign, Home, MapPin, TrendingUp, ChevronDown, Check, Search, X } from 'lucide-react-native';
 
-// Importa os dados dos bairros
 import BAIRROS_DATA from '../data/bairros.json';
 
 const { width } = Dimensions.get('window');
 
-// 🌑 --- PALETA DE CORES DARK / MODERN ---
 const COLORS = {
-    // Fundo Geral (Dark Navy profundo)
     background: '#0f1d2aff', 
-    
-    // Superfícies (Cards e Modais - um pouco mais claro que o fundo)
     card: '#1E293B',
-    
-    // Inputs (Um tom diferente para destacar do card)
     inputBackground: '#334155',
-    
-    // Cores de Destaque
-    primary: '#11ac5eff', // Azul Elétrico
-    accent: '#10B981',  // Verde Esmeralda
+    primary: '#11ac5eff', 
+    accent: '#10B981', 
     danger: '#EF4444',
-    
-    // Texto
-    text: '#1ff087ff',       // Branco quase puro
-    textSecondary: '#94A3B8', // Cinza azulado para legendas
-    
-    // Bordas e Detalhes
+    text: '#1ff087ff', 	
+    textSecondary: '#94A3B8', 
     border: '#475569',
 };
 
-// --- TIPAGEM ---
 interface BairroData {
     bairro: string;
 }
 
-// --- FUNÇÕES DE UTILIDADE ---
 const formatCurrencyInput = (value: string) => {
     let cleanValue = value.replace(/[^\d]/g, '');
     if (!cleanValue) return '';
@@ -68,10 +52,6 @@ const extractNumericValue = (formattedValue: string): number => {
     const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
     return parseFloat(cleanValue) || 0;
 };
-
-/* -------------------------------------------------------------------------- */
-/* COMPONENTES DO FORMULÁRIO (DARK THEME)                                     */
-/* -------------------------------------------------------------------------- */
 
 interface InputFieldProps {
     label: string;
@@ -141,7 +121,6 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
                 <ChevronDown size={20} color={COLORS.textSecondary} />
             </TouchableOpacity>
 
-            {/* MODAL DARK */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -197,10 +176,6 @@ const BairroSelector: React.FC<BairroSelectorProps> = ({ bairros, selectedBairro
     );
 };
 
-/* -------------------------------------------------------------------------- */
-/* TELA PRINCIPAL (INDEX)                                                     */
-/* -------------------------------------------------------------------------- */
-
 const HomeScreen = () => {
     const router = useRouter();
     
@@ -243,31 +218,25 @@ const HomeScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            {/* StatusBar claro para fundo escuro */}
             <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
             <Stack.Screen options={{ headerShown: false }} />
             
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
-                {/* HEADER */}
                 <View style={styles.headerContainer}>
-                    {/* Nota: Se o logo for preto, considere usar um logo branco ou um container claro. 
-                        Como o fundo é escuro, adicionei um container sutil se necessário, 
-                        mas aqui mantive transparente assumindo que o logo funciona ou será ajustado. */}
                     <View style={styles.logoContainer}>
                         <Image 
-                            source={require('../assets/images/logo_valorize.png')} // Ajuste o caminho se necessário
+                            source={require('../assets/images/logo_valorize.png')} 
                             style={styles.headerLogo}
-                            resizeMode="contain" // Garante que a imagem não fique distorcida
+                            resizeMode="contain" 
                         />
                     </View>
             
                     <Text style={styles.headerSubtitle}>
-                       Insira os dados e descubra se a compra vale a pena. Receba informações precisas sobre o imóvel e o bairro, na palma da sua mão.
+                        Insira os dados e descubra se a compra vale a pena. Receba informações precisas sobre o imóvel e o bairro, na palma da sua mão.
                     </Text>
                 </View>
 
-                {/* CARD PRINCIPAL */}
                 <View style={styles.card}>
                     <InputField
                         label="Valor do Imóvel"
@@ -312,10 +281,6 @@ const HomeScreen = () => {
     );
 };
 
-/* -------------------------------------------------------------------------- */
-/* ESTILOS (DARK MODE)                                                        */
-/* -------------------------------------------------------------------------- */
-
 const styles = StyleSheet.create({
     safeArea: { 
         flex: 1, 
@@ -327,25 +292,18 @@ const styles = StyleSheet.create({
         paddingTop: 20,
     },
     
-    // HEADER
     headerContainer: {
         alignItems: 'center',
         marginBottom: 30,
         marginTop: 40,
     },
     logoContainer: {
-        // Caso precise de um fundo para o logo, descomente abaixo:
-        // backgroundColor: 'rgba(255,255,255,0.1)',
-        // borderRadius: 16,
-        // padding: 10,
         marginBottom: 5,
     },
     headerLogo: {
         width: 250,
         height: 125,
         resizeMode: 'contain',
-        // Se o logo for preto, use tintColor branco, senão remova a linha abaixo
-        // tintColor: '#FFF' 
     },
     headerTitle: {
         fontSize: 24,
@@ -362,12 +320,10 @@ const styles = StyleSheet.create({
         maxWidth: '95%',
     },
 
-    // CARD FORMULÁRIO
     card: {
         backgroundColor: COLORS.card,
         borderRadius: 24,
         padding: 24,
-        // Sombras sutis para dar profundidade no dark mode
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.3,
@@ -377,7 +333,6 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
     },
 
-    // INPUTS
     inputContainer: {
         marginBottom: 20,
     },
@@ -397,7 +352,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         height: 56,
         borderWidth: 1,
-        borderColor: 'transparent', // Pode mudar para COLORS.primary ao focar se quiser
+        borderColor: 'transparent', 
     },
     iconWrapper: {
         width: 50,
@@ -416,7 +371,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
 
-    // SELECTOR
     selectButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -432,7 +386,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
 
-    // BOTÃO
     analisarButton: {
         flexDirection: 'row',
         backgroundColor: COLORS.primary,
@@ -458,7 +411,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
 
-    // FOOTER
     footerText: {
         textAlign: 'center',
         color: COLORS.textSecondary,
@@ -474,18 +426,17 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
 
-    // MODAL
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Fundo mais escuro
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', 
     },
     modalContent: {
         backgroundColor: COLORS.card,
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
         padding: 24,
-        height: '80%', // Ocupa 80% da tela
+        height: '80%', 
         shadowColor: "#000",
         shadowOffset: { width: 0, height: -5 },
         shadowOpacity: 0.5,

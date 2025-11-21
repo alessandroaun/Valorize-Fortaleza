@@ -19,14 +19,12 @@ import {
     Bus, Bike, Wifi, GraduationCap, HeartPulse, BookOpen, Trees, Activity 
 } from 'lucide-react-native';
 
-// --- IMPORTS DE DADOS E COMPONENTES ---
 import BAIRROS_DATA from '../data/bairros.json';
-import COORDENADAS_DATA from '../data/coordenadas_bairros.json'; // Novo Import
-import BairroMapa from '../components/BairroMapa'; // Novo Import
+import COORDENADAS_DATA from '../data/coordenadas_bairros.json'; 
+import BairroMapa from '../components/BairroMapa'; 
 
 const { width } = Dimensions.get('window');
 
-// 🌑 --- PALETA DE CORES DARK ---
 const COLORS = {
     background: '#0f1d2aff', 
     card: '#1E293B',
@@ -39,9 +37,8 @@ const COLORS = {
     textPrimary: '#F8FAFC', 
     textSecondary: '#94A3B8', 
     
-    // Cores de Status
     greenSuccess: '#059669', 
-    greenLight: '#10B981',   
+    greenLight: '#10B981', 
     yellowWarning: '#D97706', 
     orangeAlert: '#EA580C',
     redDanger: '#DC2626',
@@ -81,7 +78,6 @@ interface BairroFullData {
     historia: string;
 }
 
-// Nova Interface para Coordenadas
 interface CoordenadasData {
     bairro: string;
     latitude: number;
@@ -96,8 +92,6 @@ interface SearchParams {
 
 const formatCurrency = (value: number) =>
     (isNaN(value) ? 0 : value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
-
-// --- LÓGICA DE CLASSIFICAÇÃO ---
 
 const classifyIbeu = (value: string) => {
     const num = parseFloat(value || '0');
@@ -116,7 +110,6 @@ const classifyIndicator = (value: string) => {
     return { label: 'Ruim', color: COLORS.redDanger };
 };
 
-// Classificação Mobilidade
 const calculateMobilityStatus = (bus: string, bikes: string, ciclovias: string) => {
     const nBus = parseInt(bus || '0', 10);
     const nBikes = parseInt(bikes || '0', 10);
@@ -129,7 +122,6 @@ const calculateMobilityStatus = (bus: string, bikes: string, ciclovias: string) 
     return { label: 'Limitada', color: COLORS.orangeAlert };
 };
 
-// Classificação Educação e Saúde
 const calculateEduHealthStatus = (totalSchools: number, healthUnits: number) => {
     const score = totalSchools + (healthUnits * 3);
 
@@ -222,7 +214,6 @@ const IndicatorDisplay: React.FC<IndicatorDisplayProps> = ({ title, value, descr
     );
 };
 
-// NOVO COMPONENTE PARA DADOS DE ENTRADA
 interface InputDisplayCardProps {
     totalValue: number;
     area: number;
@@ -282,7 +273,6 @@ const ResultadoScreen = () => {
 
     const { bairro, valor, metrosQuadrados } = params;
 
-    // 1. Lógica de Dados do Bairro e Cálculos
     const analiseData = useMemo(() => {
         if (!bairro || !valor || !metrosQuadrados) return null;
 
@@ -306,14 +296,12 @@ const ResultadoScreen = () => {
             userPricePerM2,
         };
 
-        // Cálculo Mobilidade
         const mobilityStatus = calculateMobilityStatus(
             bairroData.pontos_de_onibus, 
             bairroData.estacoes_bicicletar, 
             bairroData.ciclovias_km
         );
 
-        // Cálculo Educação e Saúde
         const nEscolasMun = parseInt(bairroData.escolas_municipais || '0', 10);
         const nEscolasEst = parseInt(bairroData.escolas_estaduais || '0', 10);
         const totalEscolas = nEscolasMun + nEscolasEst;
@@ -346,7 +334,6 @@ const ResultadoScreen = () => {
         };
     }, [bairro, valor, metrosQuadrados]);
 
-    // 2. Nova Lógica para Encontrar Coordenadas
     const coordenadasBairro = useMemo<CoordenadasData | undefined>(() => {
         return COORDENADAS_DATA.find(item => item.bairro === bairro) as CoordenadasData | undefined;
     }, [bairro]);
@@ -361,7 +348,7 @@ const ResultadoScreen = () => {
                         Dados indisponíveis para "{bairro}".
                     </Text>
                     <TouchableOpacity onPress={() => router.replace('/')} style={styles.retryButton}>
-                         <Text style={styles.retryButtonText}>Voltar</Text>
+                            <Text style={styles.retryButtonText}>Voltar</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -380,7 +367,6 @@ const ResultadoScreen = () => {
             
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
-                {/* HEADER */}
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <ChevronLeft size={28} color={COLORS.textPrimary} />
@@ -398,7 +384,6 @@ const ResultadoScreen = () => {
                     </View>
                 </View>
 
-                {/* BOX DE RESULTADO PRINCIPAL */}
                 <View style={[styles.recommendationBox, vantagemColorStyle]}>
                     <View style={styles.recommendationHeader}>
                         <TrendingUp size={24} color={COLORS.textPrimary} />
@@ -411,18 +396,15 @@ const ResultadoScreen = () => {
                     <Text style={styles.recommendationSubtext}>{message}</Text>
                 </View>
 
-                {/* SEÇÃO 1: PREÇOS */}
                 <Text style={styles.sectionTitle}>Comparativo de Preços (m²)</Text>
                 
                 <View style={styles.gridContainer}>
                     
-                    {/* CARTÃO DE DESTAQUE COM INPUTS DO USUÁRIO */}
                     <InputDisplayCard 
                         totalValue={data.valorImovelNumerico}
                         area={data.m2ImovelNumerico}
                     />
 
-                    {/* Dados de Mercado */}
                     <View style={styles.rowContainer}>
                         <InfoCard
                             icon={DollarSign}
@@ -458,7 +440,6 @@ const ResultadoScreen = () => {
                     </View>
                 </View>
 
-                {/* SEÇÃO 2: MOBILIDADE URBANA */}
                 <Text style={styles.sectionTitle}>Mobilidade</Text>
                 <View style={styles.gridContainer}>
                     <View style={styles.rowContainer}>
@@ -494,10 +475,8 @@ const ResultadoScreen = () => {
                     </View>
                 </View>
 
-                {/* SEÇÃO 3: EDUCAÇÃO E SAÚDE */}
                 <Text style={styles.sectionTitle}>Educação e Saúde</Text>
                 <View style={styles.gridContainer}>
-                    {/* Linha 1: Escolas Públicas e Equip. Saúde */}
                       <View style={styles.rowContainer}>
                         <InfoCard
                             icon={GraduationCap}
@@ -512,9 +491,8 @@ const ResultadoScreen = () => {
                             containerStyle={{width: '48%'}}
                         />
                     </View>
-                    {/* Linha 2: Unid. Religiosas e Situação */}
                     <View style={styles.rowContainer}>
-                         <InfoCard
+                           <InfoCard
                             icon={BookOpen}
                             title="QUANTIDADE DE IGREJAS E TEMPLOS"
                             value={data.unidades_religiosas || '0'}
@@ -531,7 +509,6 @@ const ResultadoScreen = () => {
                     </View>
                 </View>
 
-                {/* SEÇÃO 4: LAZER */}
                 <Text style={styles.sectionTitle}>Lazer e Conectividade</Text>
                 <View style={styles.gridContainer}>
                       <View style={styles.rowContainer}>
@@ -548,7 +525,7 @@ const ResultadoScreen = () => {
                             unit="%"
                             containerStyle={{width: '32%'}}
                         />
-                         <InfoCard
+                          <InfoCard
                             icon={Wifi}
                             title="WIFI PÚBLICO"
                             value={data.wifi_publico_wifor || '0'}
@@ -557,7 +534,6 @@ const ResultadoScreen = () => {
                     </View>
                 </View>
 
-                {/* SEÇÃO 5: QUALIDADE DE VIDA */}
                 <Text style={styles.sectionTitle}>Qualidade de Vida</Text>
                 <View style={styles.gridContainer}>
                     <View style={styles.rowContainer}>
@@ -604,22 +580,21 @@ const ResultadoScreen = () => {
                     <>
                         <Text style={styles.sectionTitle}>História e Curiosidades</Text>
                         <View style={styles.historyBox}>
-                             <Text style={styles.historyText}>
+                            <Text style={styles.historyText}>
                                 {data.historia}
-                             </Text>
+                            </Text>
                         </View>
                     </>
                 )}
 
-                {/* --- NOVO: MAPA DO BAIRRO (MOVIDO PARA CÁ) --- */}
                 {coordenadasBairro && (
                     <View style={styles.mapContainer}>
-                         <Text style={styles.sectionTitle}>Localização</Text>
-                         <BairroMapa 
-                             bairro={data.bairro}
-                             latitude={coordenadasBairro.latitude}
-                             longitude={coordenadasBairro.longitude}
-                         />
+                            <Text style={styles.sectionTitle}>Localização</Text>
+                            <BairroMapa 
+                                bairro={data.bairro}
+                                latitude={coordenadasBairro.latitude}
+                                longitude={coordenadasBairro.longitude}
+                            />
                     </View>
                 )}
 
@@ -649,7 +624,6 @@ const styles = StyleSheet.create({
         paddingTop: 20,
     },
     
-    // HEADER
     headerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -691,12 +665,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 
-    // ESTILO DO CONTAINER DO MAPA
     mapContainer: {
         marginBottom: 25,
     },
 
-    // BOX DE RESULTADO
     recommendationBox: {
         padding: 24,
         borderRadius: 24,
@@ -736,7 +708,6 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 
-    // SEÇÕES
     sectionTitle: {
         fontSize: 18,
         fontWeight: '700',
@@ -748,7 +719,6 @@ const styles = StyleSheet.create({
         paddingLeft: 10,
     },
 
-    // GRIDS E CARDS
     gridContainer: {
         marginBottom: 10,
     },
@@ -758,7 +728,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     
-    // INFO CARD (Genérico)
     miniInfoCard: {
         backgroundColor: COLORS.cardSecondary,
         borderRadius: 16,
@@ -790,7 +759,6 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
     },
 
-    // NOVO CARD DE INPUT DE USUÁRIO (DESTAQUE)
     inputDisplayCardContainer: {
         backgroundColor: COLORS.card,
         borderRadius: 20,
@@ -802,14 +770,12 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.primary,
     },
-    // ESTILO CENTRALIZADO (Padrão para Área Total)
     inputDisplayItem: {
-        alignItems: 'center', // Alinhamento central para a Área Total (M²)
+        alignItems: 'center', 
         flex: 1,
     },
-    // NOVO ESTILO PARA ALINHAR À ESQUERDA (Valor Total)
     inputDisplayItemLeft: { 
-        alignItems: 'flex-start', // Alinhamento à esquerda para o Valor Total
+        alignItems: 'flex-start', 
         flex: 1,
     },
     inputDisplayHeader: {
@@ -825,15 +791,13 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
         flexShrink: 1, 
     },
-    // Estilo para a ÁREA TOTAL (M²).
     inputDisplayValue: {
         fontSize: 24, 
         fontWeight: '900',
         color: COLORS.textPrimary,
     },
-    // Estilo específico para o VALOR TOTAL (INPUT) para acomodar números longos.
     inputDisplayValueTotal: {
-        fontSize: 20, // Fonte reduzida para o valor
+        fontSize: 20, 
         fontWeight: '900',
         color: COLORS.textPrimary,
     },
@@ -849,7 +813,6 @@ const styles = StyleSheet.create({
     },
 
 
-    // INDICADORES (IDH, IBEU)
     indicatorDisplayCard: {
         width: '48%',
         backgroundColor: COLORS.card,
@@ -893,7 +856,6 @@ const styles = StyleSheet.create({
         opacity: 0.7,
     },
 
-    // CARD RENDA
     incomeCard: {
         backgroundColor: COLORS.card,
         borderRadius: 16,
@@ -922,7 +884,6 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
     },
 
-    // HISTÓRIA
     historyBox: {
         backgroundColor: COLORS.card,
         padding: 20,
@@ -939,7 +900,6 @@ const styles = StyleSheet.create({
         opacity: 0.9,
     },
 
-    // DICA
     tipBox: {
         backgroundColor: COLORS.infoBoxBg,
         borderWidth: 1,
@@ -966,7 +926,6 @@ const styles = StyleSheet.create({
         textAlign: 'justify',
     },
 
-    // ERRO
     errorContainer: {
         flex: 1,
         justifyContent: 'center',

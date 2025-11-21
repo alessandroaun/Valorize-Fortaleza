@@ -313,5 +313,140 @@
     "bairro": "Paupina",
     "latitude": -3.84101,
     "longitude": -38.49101
-  }
+  },
+  {
+        "bairro": "Pedras",
+        "latitude": -3.85101,
+        "longitude": -38.50101
+    },
+    {
+        "bairro": "Pici",
+        "latitude": -3.75101,
+        "longitude": -38.58501
+    },
+    {
+        "bairro": "Pirambú",
+        "latitude": -3.71501,
+        "longitude": -38.56101
+    },
+    {
+        "bairro": "Planalto Ayrton Senna",
+        "latitude": -3.82101,
+        "longitude": -38.60101
+    },
+    {
+        "bairro": "Praia de Iracema",
+        "latitude": -3.72101,
+        "longitude": -38.51501
+    },
+    {
+        "bairro": "Praia do Futuro I",
+        "latitude": -3.70101,
+        "longitude": -38.49101
+    },
+    {
+        "bairro": "Praia do Futuro II",
+        "latitude": -3.70101,
+        "longitude": -38.47101
+    },
+    {
+        "bairro": "Presidente Kennedy",
+        "latitude": -3.73801,
+        "longitude": -38.57101
+    },
+    {
+        "bairro": "Prefeito José Walter",
+        "latitude": -3.79101,
+        "longitude": -38.59101
+    },
+    {
+        "bairro": "Quintino Cunha",
+        "latitude": -3.74801,
+        "longitude": -38.60101
+    },
+    {
+        "bairro": "Rodolfo Teófilo",
+        "latitude": -3.75101,
+        "longitude": -38.56101
+    },
+    {
+        "bairro": "Sabiaguaba",
+        "latitude": -3.80101,
+        "longitude": -38.42101
+    },
+    {
+        "bairro": "São Bento",
+        "latitude": -3.82101,
+        "longitude": -38.50501
+    },
+    {
+        "bairro": "São Gerardo",
+        "latitude": -3.74101,
+        "longitude": -38.56101
+    },
+    {
+        "bairro": "São João do Tauape",
+        "latitude": -3.75101,
+        "longitude": -38.51501
+    },
+    {
+        "bairro": "Sapiranga / Coité",
+        "latitude": -3.79101,
+        "longitude": -38.44101
+    },
+    {
+        "bairro": "Serrinha",
+        "latitude": -3.77101,
+        "longitude": -38.53101
+    },
+    {
+        "bairro": "Siqueira",
+        "latitude": -3.81101,
+        "longitude": -38.61101
+    },
+    {
+        "bairro": "Tauape",
+        "latitude": -3.75101,
+        "longitude": -38.51501
+    },
+    {
+        "bairro": "Varjota",
+        "latitude": -3.75101,
+        "longitude": -38.48101
+    },
+    {
+        "bairro": "Vicente Pinzon",
+        "latitude": -3.74501,
+        "longitude": -38.46101
+    },
+    {
+        "bairro": "Vila Ellery",
+        "latitude": -3.73801,
+        "longitude": -38.56101
+    },
+    {
+        "bairro": "Vila Peri",
+        "latitude": -3.78101,
+        "longitude": -38.59101
+    },
+    {
+        "bairro": "Vila União",
+        "latitude": -3.76101,
+        "longitude": -38.50501
+    },
+    {
+        "bairro": "Vila Velha",
+        "latitude": -3.73101,
+        "longitude": -38.61101
+    },
+    {
+        "bairro": "De Lourdes",
+        "latitude": -3.76101,
+        "longitude": -38.46101
+    },
+    {
+        "bairro": "Novo Mondubim",
+        "latitude": -3.81101,
+        "longitude": -38.57101
+    }
 ]
