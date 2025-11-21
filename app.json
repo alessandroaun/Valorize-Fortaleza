@@ -1,10 +1,12 @@
 {
   "expo": {
-    "name": "ValorizeFortalezaApp",
+    "name": "Valorize Fortaleza",
     "slug": "ValorizeFortalezaApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    
+    "icon": "./assets/images/meu_icone.png",
+    
     "scheme": "valorizefortalezaapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,13 +16,16 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/meu_icone.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.alessandroaun.ValorizeFortalezaApp"
+      "package": "com.alessandro.ValorizeFortaleza",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD46jwK9xQbqae2Gn0Ex3-tNmGmnERmHvA"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -28,6 +33,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-font",
       [
         "expo-splash-screen",
         {

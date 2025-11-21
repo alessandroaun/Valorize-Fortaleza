@@ -629,10 +629,7 @@ const ResultadoScreen = () => {
                         <Text style={styles.tipTitle}>Dica de Investimento</Text>
                     </View>
                     <Text style={styles.tipText}>
-                        Imóveis abaixo da média FIPE em bairros com alta infraestrutura de transporte e educação tendem a ter maior liquidez e valorização. Se o seu preço/m² estiver <Text style={{fontWeight: 'bold'}}>abaixo</Text> do Preço Médio FIPE, a compra
-                        é considerada um bom investimento com potencial de valorização
-                        imediata. Analise a classificação do <Text style={{fontWeight: 'bold'}}>IBEU</Text> e <Text style={{fontWeight: 'bold'}}>IDH</Text> para entender
-                        a qualidade de vida e o desenvolvimento social do bairro. Compare sempre com o estado de conservação do imóvel.
+                        Imóveis abaixo da média FIPE em bairros com alta infraestrutura de transporte e educação tendem a ter maior liquidez e valorização. Se o seu preço/m² estiver <Text style={{fontWeight: 'bold'}}>abaixo</Text> do Preço Médio FIPE, a compra é considerada um bom investimento com potencial de valorização imediata. Analise a classificação do <Text style={{fontWeight: 'bold'}}>IBEU</Text> e <Text style={{fontWeight: 'bold'}}>IDH</Text> para entender a qualidade de vida e o desenvolvimento social do bairro. Compare sempre com o estado de conservação do imóvel.
                     </Text>
                 </View>
 
@@ -966,6 +963,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.textSecondary,
         lineHeight: 20,
+        textAlign: 'justify',
     },
 
     // ERRO

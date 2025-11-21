@@ -255,9 +255,10 @@ const HomeScreen = () => {
                         Como o fundo é escuro, adicionei um container sutil se necessário, 
                         mas aqui mantive transparente assumindo que o logo funciona ou será ajustado. */}
                     <View style={styles.logoContainer}>
-                         <Image 
-                            source={{ uri: 'https://i.imgur.com/oNizFxc.png' }}
+                        <Image 
+                            source={require('../assets/images/logo_valorize.png')} // Ajuste o caminho se necessário
                             style={styles.headerLogo}
+                            resizeMode="contain" // Garante que a imagem não fique distorcida
                         />
                     </View>
             
