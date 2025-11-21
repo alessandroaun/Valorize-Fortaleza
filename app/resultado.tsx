@@ -15,13 +15,13 @@ import {
 } from 'react-native';
 
 import { 
-    ChevronLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search, 
+    ChevronsLeft, MapPin, DollarSign, Home, TrendingUp, Zap, Users, Search, 
     Bus, Bike, Wifi, GraduationCap, HeartPulse, BookOpen, Trees, Activity 
-} from 'lucide-react-native';
+} from 'lucide-react-native'; // pra funcionar os ícones tem que importar o lucide-react-native
 
-import BAIRROS_DATA from '../data/bairros.json';
-import COORDENADAS_DATA from '../data/coordenadas_bairros.json'; 
-import BairroMapa from '../components/BairroMapa'; 
+import BAIRROS_DATA from '../data/bairros.json'; //as informações de cada bairro, exceto geolocalização estão aqui
+import COORDENADAS_DATA from '../data/coordenadas_bairros.json'; //para uso com a api do google maps
+import BairroMapa from '../components/BairroMapa'; //componente do mapa
 
 const { width } = Dimensions.get('window');
 
@@ -93,6 +93,7 @@ interface SearchParams {
 const formatCurrency = (value: number) =>
     (isNaN(value) ? 0 : value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
+//aqui esta a lógica por tras da medida oficial do indice de bem estar urbano fornecida pela prefeitura
 const classifyIbeu = (value: string) => {
     const num = parseFloat(value || '0');
     if (num >= 0.9) return { label: 'Muito Alto', color: COLORS.greenLight };
@@ -101,7 +102,7 @@ const classifyIbeu = (value: string) => {
     if (num >= 0.6) return { label: 'Baixo', color: COLORS.orangeAlert };
     return { label: 'Muito Baixo', color: COLORS.redDanger };
 };
-
+// o restante da lógica dos indicadores estao aqui
 const classifyIndicator = (value: string) => {
     const num = parseFloat(value || '0');
     if (num >= 0.9) return { label: 'Excelente', color: COLORS.greenLight };
@@ -109,7 +110,7 @@ const classifyIndicator = (value: string) => {
     if (num >= 0.7) return { label: 'Regular', color: COLORS.yellowWarning };
     return { label: 'Ruim', color: COLORS.redDanger };
 };
-
+//logica por tras da situacao de mobilidade do bairro
 const calculateMobilityStatus = (bus: string, bikes: string, ciclovias: string) => {
     const nBus = parseInt(bus || '0', 10);
     const nBikes = parseInt(bikes || '0', 10);
@@ -121,7 +122,7 @@ const calculateMobilityStatus = (bus: string, bikes: string, ciclovias: string) 
     if (score > 15) return { label: 'Regular', color: COLORS.yellowWarning };
     return { label: 'Limitada', color: COLORS.orangeAlert };
 };
-
+//logica por tras da situacao da educacao e saude do bairro
 const calculateEduHealthStatus = (totalSchools: number, healthUnits: number) => {
     const score = totalSchools + (healthUnits * 3);
 
@@ -369,7 +370,7 @@ const ResultadoScreen = () => {
                 
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <ChevronLeft size={28} color={COLORS.textPrimary} />
+                        <ChevronsLeft size={28} color={COLORS.textPrimary} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Análise de Mercado</Text>
                     <View style={{width: 28}} /> 
@@ -410,6 +411,7 @@ const ResultadoScreen = () => {
                             icon={DollarSign}
                             title="PREÇO MÉDIO FIPE"
                             value={formatCurrency(data.preco_medio_fipe_m2)}
+                            unit='/m²'
                             color="bg-indigo-600"
                             containerStyle={{width: '48%'}}
                         />
@@ -417,6 +419,7 @@ const ResultadoScreen = () => {
                             icon={Search}
                             title="PREÇO MÉDIO OLX"
                             value={formatCurrency(data.preco_m2_olx)}
+                            unit='/m²'
                             color="bg-teal-600"
                             containerStyle={{width: '48%'}}
                         />
@@ -427,6 +430,7 @@ const ResultadoScreen = () => {
                             icon={DollarSign}
                             title="PREÇO MÍNIMO FIPE"
                             value={formatCurrency(data.preco_minimo_fipe_m2)}
+                            unit='/m²'
                             color="bg-indigo-600"
                             containerStyle={{width: '48%'}}
                         />
@@ -434,6 +438,7 @@ const ResultadoScreen = () => {
                             icon={DollarSign}
                             title="PREÇO MÁXIMO FIPE"
                             value={formatCurrency(data.preco_maximo_fipe_m2)}
+                            unit='/m²'
                             color="bg-indigo-600"
                             containerStyle={{width: '48%'}}
                         />
@@ -451,7 +456,7 @@ const ResultadoScreen = () => {
                         />
                          <InfoCard
                             icon={Bike}
-                            title="QUANTIDADE ESTAÇÕES BICICLETAR"
+                            title="QUANTIDADE DE ESTAÇÕES BICICLETAR"
                             value={data.estacoes_bicicletar || '0'}
                             containerStyle={{width: '48%'}}
                         />
@@ -486,7 +491,7 @@ const ResultadoScreen = () => {
                         />
                         <InfoCard
                             icon={HeartPulse}
-                            title="QUANTIDADE DE UPAS E POSTOS DE SAÚDE"
+                            title="QUANTIDADE DE UNIDADES DE SAÚDE"
                             value={data.equipamentos_de_saude || '0'}
                             containerStyle={{width: '48%'}}
                         />
@@ -538,7 +543,7 @@ const ResultadoScreen = () => {
                 <View style={styles.gridContainer}>
                     <View style={styles.rowContainer}>
                         <IndicatorDisplay
-                            title="Índiece de Bem-Estar Urbano (IBEU)"
+                            title="Índice de Bem-Estar Urbano (IBEU)"
                             value={data.ibeu}
                             description="Nível de satisfação dos moradores do bairro"
                             classifier={classifyIbeu}
@@ -587,7 +592,7 @@ const ResultadoScreen = () => {
                     </>
                 )}
 
-                {coordenadasBairro && (
+                {coordenadasBairro && ( //peço por gentileza que não compartilhe minha chave de API do google maps
                     <View style={styles.mapContainer}>
                             <Text style={styles.sectionTitle}>Localização</Text>
                             <BairroMapa 
@@ -615,7 +620,7 @@ const ResultadoScreen = () => {
 
 const styles = StyleSheet.create({
     safeArea: { 
-        flex: 1, 
+        flex: 1,
         backgroundColor: COLORS.background 
     },
     scrollContent: { 
@@ -628,7 +633,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 10,
     },
     backButton: {
         padding: 5,
@@ -639,6 +643,8 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 1,
+        paddingVertical: 18,
+    
     },
     bairroTitle: {
         fontSize: 32,
@@ -646,6 +652,7 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
         textAlign: 'center',
         marginBottom: 5,
+         
     },
     regionalBadgeContainer: {
         alignItems: 'center',
@@ -705,7 +712,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'rgba(255,255,255,0.9)',
         textAlign: 'center',
-        lineHeight: 20,
+        lineHeight: 18,
     },
 
     sectionTitle: {

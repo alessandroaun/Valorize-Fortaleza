@@ -233,7 +233,7 @@ const HomeScreen = () => {
                     </View>
             
                     <Text style={styles.headerSubtitle}>
-                        Insira os dados e descubra se a compra vale a pena. Receba informações precisas sobre o imóvel e o bairro, na palma da sua mão.
+                        Insira os dados para receber um relatório preciso e completo, com a média de preços do metro quadrado do bairro, sugestão de investimento e dados locais, tudo na palma da sua mão.
                     </Text>
                 </View>
 
@@ -274,7 +274,7 @@ const HomeScreen = () => {
                 </View>
 
                 <Text style={styles.footerText}>Baseado em dados reais do mercado fortalezense.</Text>
-                <Text style={styles.footerText2}>Desenvolvido por alunos da Estácio Parangaba orientados pela professora Juciarias Medeiros. Novembro de 2025.</Text>
+                <Text style={styles.footerText2}>Desenvolvido por alunos da Estácio Parangaba orientados pela professora Juciarias Medeiros em novembro de 2025.</Text>
 
             </ScrollView>
         </SafeAreaView>

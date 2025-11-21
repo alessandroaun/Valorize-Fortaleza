@@ -23,7 +23,7 @@
       "package": "com.alessandro.ValorizeFortaleza",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyD46jwK9xQbqae2Gn0Ex3-tNmGmnERmHvA"
+          "apiKey": "AIzaSyD46jwK9xQbqae2Gn0Ex3-tNmGmnERmHvA" 
         }
       }
     },
